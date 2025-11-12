@@ -54,8 +54,8 @@ if uploaded_file:
     col_data = st.sidebar.selectbox("Coluna de Data:", df.columns, index=df.columns.get_loc("Data Emissão") if "Data Emissão" in df.columns else 0)
     col_pedido = st.sidebar.selectbox("Coluna de Nº Pedido:", df.columns, index=df.columns.get_loc("Nº Pedido") if "Nº Pedido" in df.columns else 0)
     col_tipo = st.sidebar.selectbox("Coluna de Tipo:", df.columns, index=df.columns.get_loc("Tipo") if "Tipo" in df.columns else 0)
-    col_regiao = st.sidebar.selectbox("Coluna de Região (opcional):", ["Nenhuma"] + list(df.columns), index=df.columns.get_loc("Regional.") + 1 if "Regional." in df.columns else 0)
-
+    col_codCliente = st.sidebar.selectbox("Coluna de Cód. Cliente:", df.columns, index=df.columns.get_loc("Cód. Cliente") if "Cód. Cliente" in df.columns else 0)
+    col_regiao = st.sidebar.selectbox("Coluna de Região (opcional):", ["Nenhuma"] + list(df.columns), index=df.columns.get_loc("Regional.") + 1 if "Regional." in df.columns else 0
     # ==============================
     # FILTRAR APENAS TIPO "VEN"
     # ==============================
@@ -70,7 +70,7 @@ if uploaded_file:
     # ==============================
     # CRIAR COLUNA CALCULADA ÚNICA
     # ==============================
-    df_filtrado['Pedido_Unico'] = df_filtrado[col_cliente].astype(str) + "_" + df_filtrado[col_pedido].astype(str)
+    df_filtrado['Pedido_Unico'] = df_filtrado[col_codCliente].astype(str) + "_" + df_filtrado[col_pedido].astype(str)
     
     # Converter datas
     df_filtrado[col_data] = pd.to_datetime(df_filtrado[col_data], errors="coerce")
