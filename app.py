@@ -208,6 +208,14 @@ if uploaded_file:
             st.session_state['colunas_configuradas'] = True
         
         st.success("✅ Dados processados com sucesso!")
+        
+        # Mostrar informações sobre os dados
+        with st.expander("📊 Informações sobre os dados carregados"):
+            st.write(f"**Total de registros:** {len(df_vendas):,}")
+            st.write(f"**Período dos dados:** {df_vendas[col_data].min().strftime('%d/%m/%Y')} a {df_vendas[col_data].max().strftime('%d/%m/%Y')}")
+            st.write(f"**Meses comerciais disponíveis ({len(meses_comerciais_disponiveis)}):**")
+            st.write(", ".join(meses_comerciais_disponiveis))
+        
         st.balloons()
         st.info("👈 Agora você pode navegar pelas páginas no menu lateral!")
         st.rerun()
