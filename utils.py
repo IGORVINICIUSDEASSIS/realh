@@ -75,6 +75,19 @@ def ordenar_mes_comercial(mes_str):
     mes, ano = mes_str.split('/')
     return pd.Timestamp(year=int(ano), month=meses_pt_inv[mes], day=1)
 
+def obter_mes_comercial_atual():
+    """Retorna o mês comercial atual (mesmo que incompleto)"""
+    return calcular_mes_comercial(pd.Timestamp.now())
+
+def mes_comercial_esta_completo(mes_comercial_str):
+    """
+    Verifica se um mês comercial já está completo (terminou no dia 15).
+    Retorna True se já passou do dia 15 do mês seguinte.
+    """
+    data_inicio, data_fim = obter_periodo_mes_comercial(mes_comercial_str)
+    hoje = pd.Timestamp.now()
+    return hoje > data_fim
+
 # ==============================
 # FUNÇÕES DE FORMATAÇÃO
 # ==============================

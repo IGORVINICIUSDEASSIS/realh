@@ -103,8 +103,16 @@ if uploaded_file:
                                 index=df.columns.get_loc("Linha") + 1 if "Linha" in df.columns else 0)
         col_quantidade = st.selectbox("Coluna de Quantidade (opcional):", ["Nenhuma"] + list(df.columns),
                                      index=df.columns.get_loc("Qtde") + 1 if "Qtde" in df.columns else 0)
+        
+        # Detectar toneladas - procurar por "Tn" ou "TN"
+        ton_index = 0
+        if "Tn" in df.columns:
+            ton_index = df.columns.get_loc("Tn") + 1
+        elif "TN" in df.columns:
+            ton_index = df.columns.get_loc("TN") + 1
+        
         col_toneladas = st.selectbox("Coluna de Toneladas (opcional):", ["Nenhuma"] + list(df.columns),
-                                    index=df.columns.get_loc("Tn") + 1 if "Tn" in df.columns else 0)
+                                    index=ton_index)
     
     # Hierarquia (opcional)
     with st.expander("📊 Configurar Hierarquia de Vendas (Opcional)"):
