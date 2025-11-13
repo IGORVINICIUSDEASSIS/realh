@@ -133,8 +133,8 @@ def exibir_logo():
             <style>
             .logo-container {{
                 position: fixed;
-                top: 0.5rem;
-                right: 1rem;
+                top: 3.5rem;
+                right: 2rem;
                 z-index: 999;
                 background: white;
                 padding: 0.5rem;
@@ -145,6 +145,14 @@ def exibir_logo():
                 width: 150px;
                 height: auto;
                 display: block;
+            }}
+            @media (max-width: 768px) {{
+                .logo-container {{
+                    width: 100px;
+                }}
+                .logo-container img {{
+                    width: 100px;
+                }}
             }}
             </style>
             <div class="logo-container">
