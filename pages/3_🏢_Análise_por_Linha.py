@@ -68,9 +68,24 @@ if not df_devolucoes.empty and col_linha in df_devolucoes.columns:
 else:
     devolucoes_por_linha = pd.Series(dtype=float)
 
+# Calcular quantidade e toneladas por linha
+quantidade_por_linha = pd.Series(dtype=float)
+toneladas_por_linha = pd.Series(dtype=float)
+
+col_quantidade = st.session_state.get('col_quantidade', 'Nenhuma')
+col_toneladas = st.session_state.get('col_toneladas', 'Nenhuma')
+
+if col_quantidade != 'Nenhuma' and col_quantidade in df_vendas.columns:
+    quantidade_por_linha = df_vendas.groupby(col_linha)[col_quantidade].sum()
+
+if col_toneladas != 'Nenhuma' and col_toneladas in df_vendas.columns:
+    toneladas_por_linha = df_vendas.groupby(col_linha)[col_toneladas].sum()
+
 df_linhas_analise = pd.DataFrame({
     'Vendas': vendas_por_linha,
-    'Devoluções': devolucoes_por_linha
+    'Devoluções': devolucoes_por_linha,
+    'Quantidade': quantidade_por_linha,
+    'Toneladas': toneladas_por_linha
 }).fillna(0)
 
 df_linhas_analise['Líquido'] = df_linhas_analise['Vendas'] - df_linhas_analise['Devoluções']
@@ -80,7 +95,7 @@ df_linhas_analise = df_linhas_analise.sort_values('Vendas', ascending=False)
 # ==============================
 # ABAS DE ANÁLISE
 # ==============================
-tab_metricas, tab_insights, tab_detalhes = st.tabs(["📊 Visão Geral", "🔍 Insights", "📋 Detalhamento"])
+tab_metricas, tab_insights, tab_detalhes, tab_evolucao = st.tabs(["📊 Visão Geral", "🔍 Insights", "📋 Detalhamento", "📈 Evolução"])
 
 # ==============================
 # ABA: VISÃO GERAL
@@ -99,6 +114,14 @@ with tab_metricas:
             st.metric("↩️ Devoluções", formatar_moeda(row['Devoluções']))
             st.metric("💵 Líquido", formatar_moeda(row['Líquido']))
             st.metric("📉 Taxa Devolução", f"{row['Taxa Dev. (%)']:.1f}%")
+            
+            # Mostrar Quantidade ou Toneladas dependendo da linha
+            if linha.upper() == 'HOMEOPET' and row['Quantidade'] > 0:
+                st.metric("📦 Quantidade", f"{row['Quantidade']:,.0f} un")
+            elif linha.upper() in ['NUTRIÇÃO', 'NUTRICAO'] and row['Toneladas'] > 0:
+                st.metric("⚖️ Toneladas", f"{row['Toneladas']:,.2f} Tn")
+            elif row['Quantidade'] > 0:
+                st.metric("📦 Quantidade", f"{row['Quantidade']:,.0f} un")
             
             participacao = (row['Vendas'] / vendas_por_linha.sum() * 100) if vendas_por_linha.sum() > 0 else 0
             st.info(f"📊 Representa {participacao:.1f}% do total")
@@ -225,6 +248,8 @@ with tab_detalhes:
     df_linhas_display['Devoluções'] = df_linhas_display['Devoluções'].apply(formatar_moeda)
     df_linhas_display['Líquido'] = df_linhas_display['Líquido'].apply(formatar_moeda)
     df_linhas_display['Taxa Dev. (%)'] = df_linhas_display['Taxa Dev. (%)'].apply(lambda x: f"{x:.2f}%")
+    df_linhas_display['Quantidade'] = df_linhas_display['Quantidade'].apply(lambda x: f"{x:,.0f}" if x > 0 else "-")
+    df_linhas_display['Toneladas'] = df_linhas_display['Toneladas'].apply(lambda x: f"{x:,.2f}" if x > 0 else "-")
     
     st.dataframe(df_linhas_display, use_container_width=True)
     
@@ -258,3 +283,243 @@ with tab_detalhes:
             top_clientes_linha = df_linha_sel.groupby(st.session_state['col_cliente'])[st.session_state['col_valor']].sum().sort_values(ascending=False).head(5)
             for idx, (cliente, valor) in enumerate(top_clientes_linha.items(), 1):
                 st.write(f"{idx}. **{cliente}**: {formatar_moeda(valor)}")
+        
+        st.markdown("---")
+        
+        # Top 5 por Quantidade e Toneladas para a linha selecionada
+        col_top1, col_top2 = st.columns(2)
+        
+        with col_top1:
+            st.markdown("##### 📦 Top 5 Produtos por Quantidade")
+            if col_quantidade != 'Nenhuma' and col_quantidade in df_linha_sel.columns:
+                top_qtde = df_linha_sel.groupby(st.session_state['col_produto']).agg({
+                    col_quantidade: 'sum',
+                    st.session_state['col_valor']: 'sum'
+                }).sort_values(col_quantidade, ascending=False).head(5)
+                for idx, (produto, row) in enumerate(top_qtde.iterrows(), 1):
+                    st.write(f"{idx}. **{produto}**: {row[col_quantidade]:,.0f} un ({formatar_moeda(row[st.session_state['col_valor']])})")
+            else:
+                st.info("Dados de quantidade não disponíveis")
+        
+        with col_top2:
+            st.markdown("##### ⚖️ Top 5 Produtos por Toneladas")
+            if col_toneladas != 'Nenhuma' and col_toneladas in df_linha_sel.columns:
+                top_ton = df_linha_sel.groupby(st.session_state['col_produto']).agg({
+                    col_toneladas: 'sum',
+                    st.session_state['col_valor']: 'sum'
+                }).sort_values(col_toneladas, ascending=False).head(5)
+                for idx, (produto, row) in enumerate(top_ton.iterrows(), 1):
+                    st.write(f"{idx}. **{produto}**: {row[col_toneladas]:,.2f} Tn ({formatar_moeda(row[st.session_state['col_valor']])})")
+            else:
+                st.info("Dados de toneladas não disponíveis")
+
+# ==============================
+# ABA: EVOLUÇÃO
+# ==============================
+with tab_evolucao:
+    st.markdown("### 📈 Evolução por Mês Comercial")
+    
+    # Seletor de linha para análise de evolução
+    linha_evolucao = st.selectbox("Selecione uma linha para análise:", df_linhas_analise.index.tolist(), key="linha_evolucao")
+    
+    if linha_evolucao:
+        df_linha_evolucao = df_vendas_original[df_vendas_original[col_linha] == linha_evolucao]
+        
+        # Preparar dicionário de agregação
+        agg_dict = {st.session_state['col_valor']: 'sum'}
+        
+        if col_quantidade != 'Nenhuma' and col_quantidade in df_linha_evolucao.columns:
+            agg_dict[col_quantidade] = 'sum'
+        
+        if col_toneladas != 'Nenhuma' and col_toneladas in df_linha_evolucao.columns:
+            agg_dict[col_toneladas] = 'sum'
+        
+        # Agrupar por mês comercial e produto
+        evolucao_vendas = df_linha_evolucao.groupby(['Mes_Comercial', st.session_state['col_produto']]).agg(agg_dict).reset_index()
+        
+        # Ordenar por mês comercial
+        evolucao_vendas['Ordem'] = evolucao_vendas['Mes_Comercial'].apply(ordenar_mes_comercial)
+        evolucao_vendas = evolucao_vendas.sort_values('Ordem')
+        
+        # Gráfico de Evolução de Vendas
+        st.markdown("#### 💰 Evolução do Valor de Vendas")
+        vendas_por_mes = df_linha_evolucao.groupby('Mes_Comercial')[st.session_state['col_valor']].sum().reset_index()
+        vendas_por_mes['Ordem'] = vendas_por_mes['Mes_Comercial'].apply(ordenar_mes_comercial)
+        vendas_por_mes = vendas_por_mes.sort_values('Ordem')
+        
+        fig_vendas = go.Figure()
+        fig_vendas.add_trace(go.Scatter(
+            x=vendas_por_mes['Mes_Comercial'],
+            y=vendas_por_mes[st.session_state['col_valor']],
+            mode='lines+markers',
+            name='Vendas',
+            line=dict(color='#00CC96', width=3),
+            marker=dict(size=10),
+            fill='tozeroy',
+            fillcolor='rgba(0, 204, 150, 0.1)'
+        ))
+        
+        fig_vendas.update_layout(
+            title=f"Evolução de Vendas - {linha_evolucao}",
+            xaxis_title="Mês Comercial",
+            yaxis_title="Valor (R$)",
+            hovermode='x unified',
+            height=400
+        )
+        
+        st.plotly_chart(fig_vendas, use_container_width=True)
+        
+        # Gráfico de Evolução de Quantidade
+        if col_quantidade != 'Nenhuma' and col_quantidade in df_linha_evolucao.columns:
+            st.markdown("#### 📦 Evolução da Quantidade")
+            qtde_por_mes = df_linha_evolucao.groupby('Mes_Comercial')[col_quantidade].sum().reset_index()
+            qtde_por_mes['Ordem'] = qtde_por_mes['Mes_Comercial'].apply(ordenar_mes_comercial)
+            qtde_por_mes = qtde_por_mes.sort_values('Ordem')
+            
+            fig_qtde = go.Figure()
+            fig_qtde.add_trace(go.Scatter(
+                x=qtde_por_mes['Mes_Comercial'],
+                y=qtde_por_mes[col_quantidade],
+                mode='lines+markers',
+                name='Quantidade',
+                line=dict(color='#636EFA', width=3),
+                marker=dict(size=10),
+                fill='tozeroy',
+                fillcolor='rgba(99, 110, 250, 0.1)'
+            ))
+            
+            fig_qtde.update_layout(
+                title=f"Evolução de Quantidade - {linha_evolucao}",
+                xaxis_title="Mês Comercial",
+                yaxis_title="Quantidade (un)",
+                hovermode='x unified',
+                height=400
+            )
+            
+            st.plotly_chart(fig_qtde, use_container_width=True)
+        
+        # Gráfico de Evolução de Toneladas
+        if col_toneladas != 'Nenhuma' and col_toneladas in df_linha_evolucao.columns:
+            st.markdown("#### ⚖️ Evolução das Toneladas")
+            ton_por_mes = df_linha_evolucao.groupby('Mes_Comercial')[col_toneladas].sum().reset_index()
+            ton_por_mes['Ordem'] = ton_por_mes['Mes_Comercial'].apply(ordenar_mes_comercial)
+            ton_por_mes = ton_por_mes.sort_values('Ordem')
+            
+            fig_ton = go.Figure()
+            fig_ton.add_trace(go.Scatter(
+                x=ton_por_mes['Mes_Comercial'],
+                y=ton_por_mes[col_toneladas],
+                mode='lines+markers',
+                name='Toneladas',
+                line=dict(color='#EF553B', width=3),
+                marker=dict(size=10),
+                fill='tozeroy',
+                fillcolor='rgba(239, 85, 59, 0.1)'
+            ))
+            
+            fig_ton.update_layout(
+                title=f"Evolução de Toneladas - {linha_evolucao}",
+                xaxis_title="Mês Comercial",
+                yaxis_title="Toneladas (Tn)",
+                hovermode='x unified',
+                height=400
+            )
+            
+            st.plotly_chart(fig_ton, use_container_width=True)
+        
+        # Top 10 Produtos na Evolução
+        st.markdown("---")
+        st.markdown("#### 🏆 Top 10 Produtos por Período")
+        
+        top_produtos = df_linha_evolucao.groupby(st.session_state['col_produto'])[st.session_state['col_valor']].sum().sort_values(ascending=False).head(10).index.tolist()
+        
+        tab_valor, tab_qtde, tab_ton = st.tabs(["💰 Por Valor", "📦 Por Quantidade", "⚖️ Por Toneladas"])
+        
+        with tab_valor:
+            df_top_valor = evolucao_vendas[evolucao_vendas[st.session_state['col_produto']].isin(top_produtos)]
+            
+            fig_top_valor = go.Figure()
+            cores = ['#636EFA', '#EF553B', '#00CC96', '#AB63FA', '#FFA15A', '#19D3F3', '#FF6692', '#B6E880', '#FF97FF', '#FECB52']
+            
+            for idx, produto in enumerate(top_produtos):
+                dados_produto = df_top_valor[df_top_valor[st.session_state['col_produto']] == produto]
+                fig_top_valor.add_trace(go.Scatter(
+                    x=dados_produto['Mes_Comercial'],
+                    y=dados_produto[st.session_state['col_valor']],
+                    mode='lines+markers',
+                    name=produto,
+                    line=dict(color=cores[idx % len(cores)], width=2),
+                    marker=dict(size=6)
+                ))
+            
+            fig_top_valor.update_layout(
+                title="Evolução dos Top 10 Produtos por Valor",
+                xaxis_title="Mês Comercial",
+                yaxis_title="Valor (R$)",
+                hovermode='x unified',
+                height=500,
+                showlegend=True
+            )
+            
+            st.plotly_chart(fig_top_valor, use_container_width=True)
+        
+        with tab_qtde:
+            if col_quantidade != 'Nenhuma' and col_quantidade in df_linha_evolucao.columns:
+                df_top_qtde = evolucao_vendas[evolucao_vendas[st.session_state['col_produto']].isin(top_produtos)]
+                
+                fig_top_qtde = go.Figure()
+                
+                for idx, produto in enumerate(top_produtos):
+                    dados_produto = df_top_qtde[df_top_qtde[st.session_state['col_produto']] == produto]
+                    fig_top_qtde.add_trace(go.Scatter(
+                        x=dados_produto['Mes_Comercial'],
+                        y=dados_produto[col_quantidade],
+                        mode='lines+markers',
+                        name=produto,
+                        line=dict(color=cores[idx % len(cores)], width=2),
+                        marker=dict(size=6)
+                    ))
+                
+                fig_top_qtde.update_layout(
+                    title="Evolução dos Top 10 Produtos por Quantidade",
+                    xaxis_title="Mês Comercial",
+                    yaxis_title="Quantidade (un)",
+                    hovermode='x unified',
+                    height=500,
+                    showlegend=True
+                )
+                
+                st.plotly_chart(fig_top_qtde, use_container_width=True)
+            else:
+                st.info("Dados de quantidade não disponíveis")
+        
+        with tab_ton:
+            if col_toneladas != 'Nenhuma' and col_toneladas in df_linha_evolucao.columns:
+                df_top_ton = evolucao_vendas[evolucao_vendas[st.session_state['col_produto']].isin(top_produtos)]
+                
+                fig_top_ton = go.Figure()
+                
+                for idx, produto in enumerate(top_produtos):
+                    dados_produto = df_top_ton[df_top_ton[st.session_state['col_produto']] == produto]
+                    fig_top_ton.add_trace(go.Scatter(
+                        x=dados_produto['Mes_Comercial'],
+                        y=dados_produto[col_toneladas],
+                        mode='lines+markers',
+                        name=produto,
+                        line=dict(color=cores[idx % len(cores)], width=2),
+                        marker=dict(size=6)
+                    ))
+                
+                fig_top_ton.update_layout(
+                    title="Evolução dos Top 10 Produtos por Toneladas",
+                    xaxis_title="Mês Comercial",
+                    yaxis_title="Toneladas (Tn)",
+                    hovermode='x unified',
+                    height=500,
+                    showlegend=True
+                )
+                
+                st.plotly_chart(fig_top_ton, use_container_width=True)
+            else:
+                st.info("Dados de toneladas não disponíveis")
+

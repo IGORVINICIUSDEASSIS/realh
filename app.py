@@ -101,22 +101,43 @@ if uploaded_file:
                                index=df.columns.get_loc("Tipo") if "Tipo" in df.columns else 0)
         col_linha = st.selectbox("Coluna de Linha (opcional):", ["Nenhuma"] + list(df.columns),
                                 index=df.columns.get_loc("Linha") + 1 if "Linha" in df.columns else 0)
+        col_quantidade = st.selectbox("Coluna de Quantidade (opcional):", ["Nenhuma"] + list(df.columns),
+                                     index=df.columns.get_loc("Qtde") + 1 if "Qtde" in df.columns else 0)
+        col_toneladas = st.selectbox("Coluna de Toneladas (opcional):", ["Nenhuma"] + list(df.columns),
+                                    index=df.columns.get_loc("Tn") + 1 if "Tn" in df.columns else 0)
     
     # Hierarquia (opcional)
     with st.expander("📊 Configurar Hierarquia de Vendas (Opcional)"):
         col_h1, col_h2, col_h3 = st.columns(3)
         with col_h1:
-            col_diretor = st.selectbox("Diretor:", ["Nenhuma"] + list(df.columns), index=0)
-            col_gerente = st.selectbox("Gerente:", ["Nenhuma"] + list(df.columns), index=0)
-            col_gerente_regional = st.selectbox("Ger. Regional:", ["Nenhuma"] + list(df.columns), index=0)
+            col_diretor = st.selectbox("Diretor:", ["Nenhuma"] + list(df.columns), 
+                                      index=df.columns.get_loc("Diretor") + 1 if "Diretor" in df.columns else 0)
+            col_gerente = st.selectbox("Gerente:", ["Nenhuma"] + list(df.columns), 
+                                      index=df.columns.get_loc("Gerente") + 1 if "Gerente" in df.columns else 0)
+            col_gerente_regional = st.selectbox("Ger. Regional:", ["Nenhuma"] + list(df.columns), 
+                                               index=df.columns.get_loc("Ger. Regional") + 1 if "Ger. Regional" in df.columns else 0)
         with col_h2:
-            col_supervisor = st.selectbox("Supervisor:", ["Nenhuma"] + list(df.columns), index=0)
-            col_coordenador = st.selectbox("Coordenador:", ["Nenhuma"] + list(df.columns), index=0)
-            col_consultor = st.selectbox("Consultor:", ["Nenhuma"] + list(df.columns), index=0)
+            col_supervisor = st.selectbox("Supervisor:", ["Nenhuma"] + list(df.columns), 
+                                         index=df.columns.get_loc("Supervisor") + 1 if "Supervisor" in df.columns else 0)
+            col_coordenador = st.selectbox("Coordenador:", ["Nenhuma"] + list(df.columns), 
+                                          index=df.columns.get_loc("Coordenador") + 1 if "Coordenador" in df.columns else 0)
+            col_consultor = st.selectbox("Consultor:", ["Nenhuma"] + list(df.columns), 
+                                        index=df.columns.get_loc("Consultor") + 1 if "Consultor" in df.columns else 0)
         with col_h3:
-            col_vendedor_leaf = st.selectbox("Vendedor (Hierarquia):", ["Nenhuma"] + list(df.columns), index=0)
-            col_promotor = st.selectbox("Promotor:", ["Nenhuma"] + list(df.columns), index=0)
-            col_central_vendas = st.selectbox("Central de Vendas:", ["Nenhuma"] + list(df.columns), index=0)
+            col_vendedor_leaf = st.selectbox("Vendedor (Hierarquia):", ["Nenhuma"] + list(df.columns), 
+                                            index=df.columns.get_loc("Vendedor") + 1 if "Vendedor" in df.columns else 0)
+            col_promotor = st.selectbox("Promotor:", ["Nenhuma"] + list(df.columns), 
+                                       index=df.columns.get_loc("Promotor") + 1 if "Promotor" in df.columns else 0)
+            
+            # Tentar encontrar Central de Vendas com possíveis variações de nome
+            central_index = 0
+            if "Central de Vendas" in df.columns:
+                central_index = df.columns.get_loc("Central de Vendas") + 1
+            elif "Central" in df.columns:
+                central_index = df.columns.get_loc("Central") + 1
+            
+            col_central_vendas = st.selectbox("Central de Vendas:", ["Nenhuma"] + list(df.columns), 
+                                             index=central_index)
     
     # Botão para processar dados
     st.markdown("---")
@@ -133,6 +154,8 @@ if uploaded_file:
             st.session_state['col_pedido'] = col_pedido
             st.session_state['col_tipo'] = col_tipo
             st.session_state['col_linha'] = col_linha
+            st.session_state['col_quantidade'] = col_quantidade
+            st.session_state['col_toneladas'] = col_toneladas
             st.session_state['col_diretor'] = col_diretor
             st.session_state['col_gerente'] = col_gerente
             st.session_state['col_gerente_regional'] = col_gerente_regional
