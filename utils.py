@@ -116,15 +116,37 @@ def detectar_coluna_hierarquica(df_columns, nomes_possiveis):
 # ==============================
 def exibir_logo():
     """
-    Exibe o logotipo no topo da sidebar alinhado à esquerda.
+    Exibe o logotipo no topo da sidebar com CSS customizado.
     Procura o arquivo logotipo.png na pasta assets.
     """
     logo_path = os.path.join(os.path.dirname(__file__), "assets", "logotipo.png")
     
     if os.path.exists(logo_path):
-        # Adiciona logo no topo da sidebar sem centralizar
-        st.sidebar.image(logo_path, use_column_width=False, width=200)
-        st.sidebar.markdown("")  # Espaçamento após o logo
+        # CSS para posicionar o logo no topo absoluto da sidebar
+        st.markdown(
+            """
+            <style>
+            [data-testid="stSidebar"] {
+                padding-top: 1rem;
+            }
+            .sidebar-logo {
+                margin-top: -1rem;
+                margin-bottom: 1rem;
+            }
+            </style>
+            """,
+            unsafe_allow_html=True
+        )
+        
+        # Adiciona logo usando markdown para ter controle de estilo
+        with open(logo_path, "rb") as f:
+            import base64
+            logo_base64 = base64.b64encode(f.read()).decode()
+        
+        st.sidebar.markdown(
+            f'<div class="sidebar-logo"><img src="data:image/png;base64,{logo_base64}" style="width: 100%; max-width: 200px;"></div>',
+            unsafe_allow_html=True
+        )
     else:
         # Se não encontrar o logo, não faz nada (silencioso)
         pass
