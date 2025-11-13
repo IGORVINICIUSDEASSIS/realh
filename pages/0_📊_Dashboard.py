@@ -2,9 +2,11 @@ import streamlit as st
 import pandas as pd
 import sys
 sys.path.append('/workspaces/realh')
-from utils import formatar_moeda, obter_periodo_mes_comercial, ordenar_mes_comercial
+from utils import formatar_moeda, obter_periodo_mes_comercial, ordenar_mes_comercial, exibir_logo
 
 st.set_page_config(page_title="Dashboard", page_icon="📊", layout="wide")
+
+exibir_logo()
 
 st.title("📊 Dashboard - Visão Geral")
 

@@ -3,9 +3,11 @@ import pandas as pd
 import plotly.graph_objects as go
 import sys
 sys.path.append('/workspaces/realh')
-from utils import formatar_moeda, ordenar_mes_comercial, obter_periodo_mes_comercial
+from utils import formatar_moeda, ordenar_mes_comercial, obter_periodo_mes_comercial, exibir_logo
 
 st.set_page_config(page_title="Análise por Gerente Regional", page_icon="🌎", layout="wide")
+
+exibir_logo()
 
 st.title("🌎 Análise por Gerente Regional")
 

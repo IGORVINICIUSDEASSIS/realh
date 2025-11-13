@@ -2,7 +2,9 @@
 Funções utilitárias compartilhadas entre as páginas do dashboard
 """
 import pandas as pd
+import streamlit as st
 from dateutil.relativedelta import relativedelta
+import os
 
 # ==============================
 # FUNÇÕES DE MÊS COMERCIAL
@@ -108,3 +110,20 @@ def detectar_coluna_hierarquica(df_columns, nomes_possiveis):
             if nome.lower() in col.lower():
                 return idx + 1  # +1 porque "Nenhuma" está na posição 0
     return 0
+
+# ==============================
+# FUNÇÕES DE UI
+# ==============================
+def exibir_logo():
+    """
+    Exibe o logotipo na sidebar de forma centralizada.
+    Procura o arquivo logotipo.png na pasta assets.
+    """
+    logo_path = os.path.join(os.path.dirname(__file__), "assets", "logotipo.png")
+    
+    if os.path.exists(logo_path):
+        st.sidebar.image(logo_path, use_container_width=True)
+        st.sidebar.markdown("---")
+    else:
+        # Se não encontrar o logo, não faz nada (silencioso)
+        pass

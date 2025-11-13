@@ -5,9 +5,11 @@ import plotly.graph_objects as go
 from datetime import datetime
 import sys
 sys.path.append('/workspaces/realh')
-from utils import formatar_moeda
+from utils import formatar_moeda, exibir_logo
 
 st.set_page_config(page_title="Insights", page_icon="💡", layout="wide")
+
+exibir_logo()
 
 st.title("💡 Insights e Análise de Devoluções")
 

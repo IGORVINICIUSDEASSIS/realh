@@ -1,6 +1,6 @@
 import streamlit as st
 import pandas as pd
-from utils import calcular_mes_comercial, obter_periodo_mes_comercial, ordenar_mes_comercial
+from utils import calcular_mes_comercial, obter_periodo_mes_comercial, ordenar_mes_comercial, exibir_logo
 
 # ==============================
 # CONFIGURAÇÃO DA PÁGINA
@@ -10,6 +10,9 @@ st.set_page_config(
     page_icon="📊",
     layout="wide"
 )
+
+# Exibir logo
+exibir_logo()
 
 st.title("📊 Dashboard de Vendas - Real H")
 st.markdown("### Bem-vindo ao Sistema de Análise de Vendas")
