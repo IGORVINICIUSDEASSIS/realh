@@ -4,7 +4,7 @@ import sys
 sys.path.append('/workspaces/realh')
 from auth import (list_users, add_user, update_user, delete_user, 
                   save_vendas_data, load_vendas_data)
-from utils import calcular_mes_comercial, exibir_logo
+from utils import calcular_mes_comercial, exibir_logo, safe_strftime
 
 st.set_page_config(
     page_title="Painel Admin - Real H",
@@ -244,7 +244,7 @@ with tab3:
         st.subheader("📅 Período dos Dados")
         data_min = df_vendas[config['col_data']].min()
         data_max = df_vendas[config['col_data']].max()
-        st.info(f"📆 De {data_min.strftime('%d/%m/%Y')} até {data_max.strftime('%d/%m/%Y')}")
+        st.info(f"📆 De {safe_strftime(data_min)} até {safe_strftime(data_max)}")
         
         st.markdown("---")
         

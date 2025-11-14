@@ -6,7 +6,8 @@ import numpy as np
 from scipy import stats
 import sys
 sys.path.append('/workspaces/realh')
-from utils import formatar_moeda, ordenar_mes_comercial, obter_periodo_mes_comercial, exibir_logo
+from utils import (calcular_mes_comercial, obter_periodo_mes_comercial, exibir_logo,
+                  exibir_filtros_globais, aplicar_filtros_globais, ordenar_mes_comercial, safe_strftime)
 
 st.set_page_config(page_title="Análise Temporal", page_icon="📅", layout="wide")
 
@@ -83,7 +84,7 @@ if meses_comerciais_disponiveis:
                 (df_devolucoes[st.session_state['col_data']] <= data_fim)
             ].copy()
         
-        st.sidebar.info(f"📅 Período: {data_inicio.strftime('%d/%m/%Y')} a {data_fim.strftime('%d/%m/%Y')}")
+        st.sidebar.info(f"📅 Período: {safe_strftime(data_inicio)} a {safe_strftime(data_fim)}")
     else:
         st.sidebar.info("📅 Exibindo todos os períodos")
 
@@ -233,7 +234,7 @@ if analise_tipo == "dia" and 'MM30' in vendas_por_periodo.columns:
                 for idx, row in picos.iterrows():
                     percentual_acima = (row['Residual'] / row['MM30'] * 100) if row['MM30'] > 0 else 0
                     st.success(f"""
-                    **{row['Período'].strftime('%d/%m/%Y')}**
+                    **{safe_strftime(row['Período'])}**
                     - Vendas: {formatar_moeda(row['Vendas'])} 
                     - Esperado: {formatar_moeda(row['MM30'])}
                     - **+{percentual_acima:.0f}%** acima da média
@@ -246,7 +247,7 @@ if analise_tipo == "dia" and 'MM30' in vendas_por_periodo.columns:
                 for idx, row in quedas.iterrows():
                     percentual_abaixo = (abs(row['Residual']) / row['MM30'] * 100) if row['MM30'] > 0 else 0
                     st.error(f"""
-                    **{row['Período'].strftime('%d/%m/%Y')}**
+                    **{safe_strftime(row['Período'])}**
                     - Vendas: {formatar_moeda(row['Vendas'])}
                     - Esperado: {formatar_moeda(row['MM30'])}
                     - **-{percentual_abaixo:.0f}%** abaixo da média

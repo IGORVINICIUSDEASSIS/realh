@@ -7,6 +7,27 @@ from dateutil.relativedelta import relativedelta
 import os
 
 # ==============================
+# FUNÇÕES DE FORMATAÇÃO SEGURA
+# ==============================
+def safe_strftime(date_value, format_str='%d/%m/%Y'):
+    """
+    Formata uma data de forma segura, tratando valores NaT/None
+    
+    Args:
+        date_value: datetime object ou NaT
+        format_str: formato de saída (padrão: '%d/%m/%Y')
+    
+    Returns:
+        str: data formatada ou mensagem de erro
+    """
+    if pd.isna(date_value):
+        return "Data inválida"
+    try:
+        return date_value.strftime(format_str)
+    except:
+        return "Data inválida"
+
+# ==============================
 # FUNÇÕES DE MÊS COMERCIAL
 # ==============================
 def calcular_mes_comercial(data):

@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import sys
 sys.path.append('/workspaces/realh')
-from utils import calcular_mes_comercial, obter_periodo_mes_comercial, ordenar_mes_comercial, exibir_logo, exibir_filtros_globais, aplicar_filtros_globais
+from utils import calcular_mes_comercial, obter_periodo_mes_comercial, ordenar_mes_comercial, exibir_logo, exibir_filtros_globais, aplicar_filtros_globais, safe_strftime
 from auth import load_vendas_data, apply_hierarchy_filter
 
 # ==============================
@@ -155,7 +155,7 @@ with col2:
     if st.session_state['col_data'] in df_vendas_filtrado.columns:
         data_min = df_vendas_filtrado[st.session_state['col_data']].min()
         data_max = df_vendas_filtrado[st.session_state['col_data']].max()
-        st.metric("📅 Período", f"{data_min.strftime('%m/%Y')} - {data_max.strftime('%m/%Y')}")
+        st.metric("📅 Período", f"{safe_strftime(data_min, '%m/%Y')} - {safe_strftime(data_max, '%m/%Y')}")
 with col3:
     total_vendas = df_vendas_filtrado[st.session_state['col_valor']].sum()
     st.metric("💰 Total de Vendas", f"R$ {total_vendas:,.2f}")

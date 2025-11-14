@@ -5,7 +5,8 @@ import plotly.graph_objects as go
 from datetime import datetime
 import sys
 sys.path.append('/workspaces/realh')
-from utils import formatar_moeda, obter_periodo_mes_comercial, ordenar_mes_comercial, exibir_logo
+from utils import (calcular_mes_comercial, obter_periodo_mes_comercial, exibir_logo,
+                  exibir_filtros_globais, aplicar_filtros_globais, ordenar_mes_comercial, safe_strftime)
 
 st.set_page_config(page_title="Comparativos", page_icon="📈", layout="wide")
 
@@ -101,7 +102,7 @@ if len(meses_comerciais_disponiveis) >= 2:
     
     with col1:
         st.markdown(f"**📅 {mes_1}**")
-        st.markdown(f"*{data_inicio_1.strftime('%d/%m/%Y')} a {data_fim_1.strftime('%d/%m/%Y')}*")
+        st.markdown(f"*{safe_strftime(data_inicio_1)} a {safe_strftime(data_fim_1)}*")
         st.metric("💰 Vendas", formatar_moeda(valor_total_1))
         st.metric("↩️ Devoluções", formatar_moeda(valor_dev_1))
         st.metric("💵 Líquido", formatar_moeda(valor_liquido_1))
@@ -111,7 +112,7 @@ if len(meses_comerciais_disponiveis) >= 2:
     
     with col2:
         st.markdown(f"**📅 {mes_2}**")
-        st.markdown(f"*{data_inicio_2.strftime('%d/%m/%Y')} a {data_fim_2.strftime('%d/%m/%Y')}*")
+        st.markdown(f"*{safe_strftime(data_inicio_2)} a {safe_strftime(data_fim_2)}*")
         st.metric("💰 Vendas", formatar_moeda(valor_total_2))
         st.metric("↩️ Devoluções", formatar_moeda(valor_dev_2))
         st.metric("💵 Líquido", formatar_moeda(valor_liquido_2))

@@ -55,7 +55,7 @@ if meses_comerciais_disponiveis:
                 (df_devolucoes[st.session_state['col_data']] <= data_fim)
             ].copy()
         
-        st.sidebar.info(f"📅 {data_inicio.strftime('%d/%m/%Y')} a {data_fim.strftime('%d/%m/%Y')}")
+        st.sidebar.info(f"📅 {safe_strftime(data_inicio)} a {safe_strftime(data_fim)}")
     else:
         st.sidebar.info("📅 Exibindo todos os períodos")
 
