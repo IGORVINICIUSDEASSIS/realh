@@ -712,29 +712,38 @@ def exibir_filtros_globais(df_vendas_original, col_cliente, col_produto, col_ven
         st.markdown("**📅 Período de Datas**")
         df_temp = df_vendas_original.copy()
         df_temp[col_data] = pd.to_datetime(df_temp[col_data])
-        data_min = df_temp[col_data].min().date()
-        data_max = df_temp[col_data].max().date()
+        data_min = df_temp[col_data].min()
+        data_max = df_temp[col_data].max()
         
-        # Se não tiver datas selecionadas, começa vazio (None)
-        default_data_inicio = filtros.get('data_inicio')
-        default_data_fim = filtros.get('data_fim')
-        
-        if default_data_inicio is None or default_data_fim is None:
-            default_range = (data_min, data_max)
+        # Verificar se as datas são válidas
+        if pd.isna(data_min) or pd.isna(data_max):
+            st.warning("⚠️ Datas inválidas ou ausentes nos dados")
+            filtros['data_inicio'] = None
+            filtros['data_fim'] = None
         else:
-            default_range = (default_data_inicio.date(), default_data_fim.date())
-        
-        data_inicio, data_fim = st.select_slider(
-            "Selecione o período:",
-            options=pd.date_range(start=data_min, end=data_max, freq='D').date,
-            value=default_range,
-            key='filtro_datas'
-        )
-        
-        filtros['data_inicio'] = pd.Timestamp(data_inicio)
-        filtros['data_fim'] = pd.Timestamp(data_fim)
-        
-        st.caption(f"📅 Período: {data_inicio} a {data_fim}")
+            data_min = data_min.date()
+            data_max = data_max.date()
+            
+            # Se não tiver datas selecionadas, começa vazio (None)
+            default_data_inicio = filtros.get('data_inicio')
+            default_data_fim = filtros.get('data_fim')
+            
+            if default_data_inicio is None or default_data_fim is None:
+                default_range = (data_min, data_max)
+            else:
+                default_range = (default_data_inicio.date(), default_data_fim.date())
+            
+            data_inicio, data_fim = st.select_slider(
+                "Selecione o período:",
+                options=pd.date_range(start=data_min, end=data_max, freq='D').date,
+                value=default_range,
+                key='filtro_datas'
+            )
+            
+            filtros['data_inicio'] = pd.Timestamp(data_inicio)
+            filtros['data_fim'] = pd.Timestamp(data_fim)
+            
+            st.caption(f"📅 Período: {data_inicio} a {data_fim}")
         
         # -------- BOTÕES --------
         st.markdown("---")
