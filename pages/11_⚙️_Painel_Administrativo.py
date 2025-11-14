@@ -454,11 +454,22 @@ with tab2:
                         default_valores = []
                     
                     if valores_disponiveis:
+                        # Mostrar lista de valores disponíveis em um expander
+                        with st.expander(f"📋 Ver todos os {len(valores_disponiveis)} valores disponíveis de '{edit_nivel}'"):
+                            st.info(f"Total: {len(valores_disponiveis)} valores")
+                            # Dividir em colunas para melhor visualização
+                            num_cols = 3
+                            cols = st.columns(num_cols)
+                            for i, valor in enumerate(valores_disponiveis):
+                                with cols[i % num_cols]:
+                                    st.text(f"• {valor}")
+                        
                         edit_valor = st.multiselect(
                             "Selecione um ou mais valores (permite ver múltiplos vendedores, gerentes, etc)",
                             valores_disponiveis,
                             default=[v for v in default_valores if v in valores_disponiveis],
-                            key='edit_valor_multiselect'
+                            key='edit_valor_multiselect',
+                            help=f"{len(valores_disponiveis)} valores disponíveis. Clique para ver a lista completa acima."
                         )
                     else:
                         st.warning("⚠️ Carregue uma planilha primeiro para ver os valores disponíveis")
@@ -560,9 +571,21 @@ with tab2:
                         valores_disponiveis = sorted(dados[0][coluna].dropna().unique().tolist())
                 
                 if valores_disponiveis:
+                    # Mostrar lista de valores disponíveis
+                    st.info(f"📋 {len(valores_disponiveis)} valores disponíveis de '{nivel_hierarquia}'")
+                    
+                    # Botão para expandir e ver todos
+                    if st.checkbox("🔍 Ver lista completa de valores", key="show_values_create"):
+                        num_cols = 3
+                        cols = st.columns(num_cols)
+                        for i, valor in enumerate(valores_disponiveis):
+                            with cols[i % num_cols]:
+                                st.text(f"• {valor}")
+                    
                     valor_hierarquia = st.multiselect(
                         "Selecione um ou mais valores (permite ver múltiplos vendedores, gerentes, etc)",
-                        valores_disponiveis
+                        valores_disponiveis,
+                        help=f"{len(valores_disponiveis)} valores disponíveis. Marque a caixa acima para ver a lista completa."
                     )
                 else:
                     st.warning("⚠️ Carregue uma planilha primeiro para ver os valores disponíveis")
