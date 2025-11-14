@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import sys
 sys.path.append('/workspaces/realh')
-from utils import formatar_moeda, obter_periodo_mes_comercial, ordenar_mes_comercial, exibir_logo, exibir_top_com_alternancia
+from utils import formatar_moeda, obter_periodo_mes_comercial, ordenar_mes_comercial, exibir_logo, exibir_top_com_alternancia, safe_strftime
 
 st.set_page_config(page_title="Dashboard", page_icon="📊", layout="wide")
 
