@@ -2,6 +2,7 @@ import streamlit as st
 import sys
 sys.path.append('/workspaces/realh')
 from auth import create_default_admin, authenticate
+from datetime import datetime, timedelta
 
 st.set_page_config(
     page_title="Real H - Dashboard",
@@ -49,23 +50,16 @@ if not st.session_state['authenticated']:
                 if not username or not password:
                     st.error("⚠️ Preencha todos os campos")
                 else:
-                    user_data = authenticate(username, password)
+                    user_data, error_msg = authenticate(username, password)
                     if user_data:
                         st.session_state['authenticated'] = True
                         st.session_state['user_data'] = user_data
                         st.session_state['username'] = username
+                        st.session_state['last_activity'] = datetime.now()
                         st.success(f"✅ Bem-vindo, {user_data['nome']}!")
                         st.rerun()
                     else:
-                        st.error("❌ Usuário ou senha incorretos")
-                        
-                        # Debug: verificar se usuário existe
-                        from auth import load_users
-                        users = load_users()
-                        if username in users:
-                            st.warning(f"ℹ️ O usuário '{username}' existe, mas a senha está incorreta")
-                        else:
-                            st.warning(f"ℹ️ O usuário '{username}' não existe no sistema")
+                        st.error(f"❌ {error_msg}")
         
         st.markdown("---")
         st.caption("🔒 Acesso seguro e criptografado")

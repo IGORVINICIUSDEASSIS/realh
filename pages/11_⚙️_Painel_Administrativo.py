@@ -27,7 +27,7 @@ st.title("⚙️ Painel Administrativo")
 st.markdown("---")
 
 # Tabs principais
-tab1, tab2, tab3 = st.tabs(["📤 Upload de Dados", "👥 Gerenciar Usuários", "📊 Status do Sistema"])
+tab1, tab2, tab3, tab4 = st.tabs(["📤 Upload de Dados", "👥 Gerenciar Usuários", "📊 Status do Sistema", "🔒 Logs de Segurança"])
 
 # ==========================================
 # TAB 1: UPLOAD DE DADOS
@@ -574,3 +574,87 @@ with tab3:
     else:
         st.warning("⚠️ Nenhum dado carregado no sistema")
         st.info("Use a aba 'Upload de Dados' para carregar uma planilha")
+# ==========================================
+# TAB 4: LOGS DE SEGURANÇA
+# ==========================================
+with tab4:
+    st.header("🔒 Logs de Segurança")
+    st.markdown("Monitore atividades de login e eventos de segurança do sistema")
+    
+    import json
+    from pathlib import Path
+    from datetime import datetime, timedelta
+    
+    logs_file = Path("data/security_logs.json")
+    
+    if logs_file.exists():
+        with open(logs_file, 'r', encoding='utf-8') as f:
+            logs = json.load(f)
+        
+        if logs:
+            # Criar DataFrame com logs
+            df_logs = pd.DataFrame(logs)
+            df_logs['timestamp'] = pd.to_datetime(df_logs['timestamp'])
+            
+            # Estatísticas
+            col1, col2, col3, col4 = st.columns(4)
+            with col1:
+                total_logins = len(df_logs[df_logs['event_type'] == 'login'])
+                st.metric("🔑 Total de Logins", total_logins)
+            with col2:
+                logins_sucesso = len(df_logs[(df_logs['event_type'] == 'login') & (df_logs['success'] == True)])
+                st.metric("✅ Logins Bem-sucedidos", logins_sucesso)
+            with col3:
+                logins_falha = len(df_logs[(df_logs['event_type'] == 'login') & (df_logs['success'] == False)])
+                st.metric("❌ Logins Falhos", logins_falha)
+            with col4:
+                bloqueios = len(df_logs[df_logs['event_type'] == 'login_blocked'])
+                st.metric("🚫 Bloqueios", bloqueios)
+            
+            st.markdown("---")
+            
+            # Filtros
+            col_f1, col_f2, col_f3 = st.columns(3)
+            with col_f1:
+                tipo_filtro = st.multiselect("Tipo de Evento", df_logs['event_type'].unique(), default=df_logs['event_type'].unique())
+            with col_f2:
+                usuario_filtro = st.multiselect("Usuário", df_logs['username'].unique(), default=df_logs['username'].unique())
+            with col_f3:
+                dias = st.slider("Últimos N dias", 1, 30, 7)
+            
+            # Aplicar filtros
+            data_limite = datetime.now() - timedelta(days=dias)
+            df_filtrado = df_logs[
+                (df_logs['event_type'].isin(tipo_filtro)) &
+                (df_logs['username'].isin(usuario_filtro)) &
+                (df_logs['timestamp'] >= data_limite)
+            ].sort_values('timestamp', ascending=False)
+            
+            st.subheader(f"📋 Últimos {len(df_filtrado)} Eventos")
+            
+            # Exibir logs
+            for idx, log in df_filtrado.iterrows():
+                icon = "✅" if log['success'] else "❌"
+                evento = {
+                    'login': '🔑 Login',
+                    'login_blocked': '🚫 Bloqueio',
+                    'user_created': '👤 Usuário Criado',
+                    'user_updated': '✏️ Usuário Atualizado',
+                    'user_deleted': '🗑️ Usuário Deletado'
+                }.get(log['event_type'], log['event_type'])
+                
+                with st.expander(f"{icon} {evento} - {log['username']} - {log['timestamp'].strftime('%d/%m/%Y %H:%M:%S')}"):
+                    st.write(f"**Tipo:** {log['event_type']}")
+                    st.write(f"**Usuário:** {log['username']}")
+                    st.write(f"**Status:** {'Sucesso' if log['success'] else 'Falha'}")
+                    st.write(f"**Data/Hora:** {log['timestamp'].strftime('%d/%m/%Y %H:%M:%S')}")
+                    if log.get('details'):
+                        st.write(f"**Detalhes:** {log['details']}")
+        else:
+            st.info("📊 Nenhum log de segurança registrado ainda")
+    else:
+        st.info("📊 Arquivo de logs não encontrado. Os logs serão criados automaticamente após o primeiro login.")
+    
+    st.markdown("---")
+    st.caption("🔒 Os logs são mantidos automaticamente para auditoria e segurança")
+    st.caption("⚙️ Apenas os últimos 1000 eventos são mantidos")

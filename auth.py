@@ -1,17 +1,19 @@
-"""
-Sistema de autenticação e gerenciamento de usuários
-"""
+"""Sistema de autenticação e gerenciamento de usuários"""
 import streamlit as st
 import pandas as pd
 import json
 import os
 from pathlib import Path
 import hashlib
+from datetime import datetime, timedelta
+import re
 
 # Diretório para armazenar dados
 DATA_DIR = Path("data")
 USERS_FILE = DATA_DIR / "users.json"
 VENDAS_FILE = DATA_DIR / "vendas_data.parquet"
+LOGS_FILE = DATA_DIR / "security_logs.json"
+LOGIN_ATTEMPTS_FILE = DATA_DIR / "login_attempts.json"
 
 # Criar diretório se não existir
 DATA_DIR.mkdir(exist_ok=True)
@@ -19,6 +21,99 @@ DATA_DIR.mkdir(exist_ok=True)
 def hash_password(password):
     """Gera hash SHA256 da senha"""
     return hashlib.sha256(password.encode()).hexdigest()
+
+def log_security_event(event_type, username, success, details=""):
+    """Registra eventos de segurança"""
+    try:
+        logs = []
+        if LOGS_FILE.exists():
+            with open(LOGS_FILE, 'r', encoding='utf-8') as f:
+                logs = json.load(f)
+        
+        log_entry = {
+            'timestamp': datetime.now().isoformat(),
+            'event_type': event_type,
+            'username': username,
+            'success': success,
+            'details': details
+        }
+        
+        logs.append(log_entry)
+        
+        # Manter apenas últimos 1000 logs
+        if len(logs) > 1000:
+            logs = logs[-1000:]
+        
+        with open(LOGS_FILE, 'w', encoding='utf-8') as f:
+            json.dump(logs, f, indent=2, ensure_ascii=False)
+    except:
+        pass  # Não falhar se não conseguir logar
+
+def check_rate_limit(username):
+    """Verifica se usuário está bloqueado por tentativas excessivas"""
+    try:
+        attempts = {}
+        if LOGIN_ATTEMPTS_FILE.exists():
+            with open(LOGIN_ATTEMPTS_FILE, 'r', encoding='utf-8') as f:
+                attempts = json.load(f)
+        
+        if username in attempts:
+            attempt_data = attempts[username]
+            last_attempt = datetime.fromisoformat(attempt_data['last_attempt'])
+            
+            # Se passou 15 minutos, limpar contador
+            if datetime.now() - last_attempt > timedelta(minutes=15):
+                del attempts[username]
+                with open(LOGIN_ATTEMPTS_FILE, 'w', encoding='utf-8') as f:
+                    json.dump(attempts, f, indent=2)
+                return True, 0
+            
+            # Verificar se atingiu o limite
+            if attempt_data['count'] >= 5:
+                remaining = 15 - (datetime.now() - last_attempt).seconds // 60
+                return False, remaining
+        
+        return True, 0
+    except:
+        return True, 0
+
+def record_login_attempt(username, success):
+    """Registra tentativa de login"""
+    try:
+        attempts = {}
+        if LOGIN_ATTEMPTS_FILE.exists():
+            with open(LOGIN_ATTEMPTS_FILE, 'r', encoding='utf-8') as f:
+                attempts = json.load(f)
+        
+        if success:
+            # Limpar contador em caso de sucesso
+            if username in attempts:
+                del attempts[username]
+        else:
+            # Incrementar contador de falhas
+            if username not in attempts:
+                attempts[username] = {'count': 0, 'last_attempt': datetime.now().isoformat()}
+            
+            attempts[username]['count'] += 1
+            attempts[username]['last_attempt'] = datetime.now().isoformat()
+        
+        with open(LOGIN_ATTEMPTS_FILE, 'w', encoding='utf-8') as f:
+            json.dump(attempts, f, indent=2)
+    except:
+        pass
+
+def validate_password_strength(password):
+    """Valida força da senha"""
+    if len(password) < 8:
+        return False, "Senha deve ter no mínimo 8 caracteres"
+    
+    if not re.search(r'[A-Za-z]', password):
+        return False, "Senha deve conter letras"
+    
+    if not re.search(r'\d', password):
+        return False, "Senha deve conter números"
+    
+    return True, "Senha válida"
 
 def load_users():
     """Carrega lista de usuários do arquivo JSON"""
@@ -47,34 +142,46 @@ def create_default_admin():
     return False
 
 def authenticate(username, password):
-    """Autentica usuário"""
+    """Autentica usuário com rate limiting e logs"""
+    # Verificar rate limit
+    allowed, remaining = check_rate_limit(username)
+    if not allowed:
+        log_security_event('login_blocked', username, False, f'Bloqueado por {remaining} minutos')
+        return None, f"Muitas tentativas falhas. Tente novamente em {remaining} minuto(s)"
+    
     users = load_users()
+    
     if username in users:
         if users[username]['password'] == hash_password(password):
-            return users[username]
-    return None
-
-def add_user(username, password, nome, tipo, hierarquia):
-    """Adiciona novo usuário
+            record_login_attempt(username, True)
+            log_security_event('login', username, True)
+            return users[username], None
     
-    Args:
-        username: Login do usuário
-        password: Senha
-        nome: Nome completo
-        tipo: 'admin' ou 'user'
-        hierarquia: Dicionário com nível e valor (ex: {'nivel': 'vendedor', 'valor': 'João Silva'})
-    """
+    record_login_attempt(username, False)
+    log_security_event('login', username, False, 'Credenciais inválidas')
+    return None, "Usuário ou senha incorretos"
+
+def add_user(username, password, nome, tipo='user', hierarquia=None):
+    """Adiciona novo usuário com validação de senha"""
     users = load_users()
+    
     if username in users:
         return False, "Usuário já existe"
+    
+    # Validar força da senha
+    valid, message = validate_password_strength(password)
+    if not valid:
+        return False, message
     
     users[username] = {
         'password': hash_password(password),
         'nome': nome,
         'tipo': tipo,
-        'hierarquia': hierarquia
+        'hierarquia': hierarquia or {}
     }
+    
     save_users(users)
+    log_security_event('user_created', username, True, f'Criado por admin')
     return True, "Usuário criado com sucesso"
 
 def update_user(username, **kwargs):

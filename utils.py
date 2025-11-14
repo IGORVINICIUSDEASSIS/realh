@@ -4,7 +4,34 @@ Funções utilitárias compartilhadas entre as páginas do dashboard
 import pandas as pd
 import streamlit as st
 from dateutil.relativedelta import relativedelta
+from datetime import datetime, timedelta
 import os
+
+# ==============================
+# FUNÇÕES DE SEGURANÇA
+# ==============================
+def check_session_timeout(timeout_minutes=30):
+    """
+    Verifica se a sessão expirou por inatividade
+    Retorna True se sessão válida, False se expirou
+    """
+    if 'authenticated' not in st.session_state or not st.session_state['authenticated']:
+        return False
+    
+    if 'last_activity' not in st.session_state:
+        st.session_state['last_activity'] = datetime.now()
+        return True
+    
+    last_activity = st.session_state['last_activity']
+    if datetime.now() - last_activity > timedelta(minutes=timeout_minutes):
+        st.session_state.clear()
+        st.warning(f"⏱️ Sua sessão expirou após {timeout_minutes} minutos de inatividade. Faça login novamente.")
+        st.stop()
+        return False
+    
+    # Atualizar última atividade
+    st.session_state['last_activity'] = datetime.now()
+    return True
 
 # ==============================
 # FUNÇÕES DE FORMATAÇÃO SEGURA

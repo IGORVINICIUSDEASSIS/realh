@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import sys
 sys.path.append('/workspaces/realh')
-from utils import calcular_mes_comercial, obter_periodo_mes_comercial, ordenar_mes_comercial, exibir_logo, exibir_filtros_globais, aplicar_filtros_globais, safe_strftime
+from utils import calcular_mes_comercial, obter_periodo_mes_comercial, ordenar_mes_comercial, exibir_logo, exibir_filtros_globais, aplicar_filtros_globais, safe_strftime, check_session_timeout
 from auth import load_vendas_data, apply_hierarchy_filter
 
 # ==============================
@@ -15,11 +15,14 @@ st.set_page_config(
 )
 
 # ==============================
-# VERIFICAR AUTENTICAÇÃO
+# VERIFICAR AUTENTICAÇÃO E TIMEOUT
 # ==============================
 if 'authenticated' not in st.session_state or not st.session_state['authenticated']:
     st.warning("⚠️ Você precisa fazer login primeiro!")
     st.stop()
+
+# Verificar timeout de sessão (30 minutos)
+check_session_timeout(30)
 
 # ==============================
 # CARREGAR DADOS CENTRALIZADOS
