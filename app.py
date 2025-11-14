@@ -7,28 +7,25 @@ from utils import calcular_mes_comercial, obter_periodo_mes_comercial, ordenar_m
 # ==============================
 st.set_page_config(
     page_title="Real H - Dashboard de Vendas",
-    page_icon="🏠",
+    page_icon="📊",
     layout="wide"
 )
 
 # Exibir logo
 exibir_logo()
 
-# CSS para renomear "app" na sidebar
+# CSS para remover "a" da numeração na sidebar
 st.markdown("""
 <style>
-    [data-testid="stSidebarNav"] li:first-child a span {
-        display: none;
-    }
-    [data-testid="stSidebarNav"] li:first-child a::before {
-        content: "🏠 Página Inicial";
-        margin-left: 1rem;
-        font-size: 14px;
+    /* Remove o 'a' dos itens 3a e 5a na sidebar */
+    [data-testid="stSidebarNav"] ul li a[href*="3a"] span::first-letter,
+    [data-testid="stSidebarNav"] ul li a[href*="5a"] span::first-letter {
+        font-size: 0;
     }
 </style>
 """, unsafe_allow_html=True)
 
-st.title("🏠 Página Inicial - Real H")
+st.title("📊 Dashboard de Vendas - Real H")
 st.markdown("### Bem-vindo ao Sistema de Análise de Vendas")
 
 # ==============================
