@@ -69,18 +69,18 @@ if meses_comerciais_disponiveis:
         help="Aplica filtro adicional aos dados"
     )
     
-    # Aplicar filtro
+    # Aplicar filtro de mês (sobre os dados já filtrados pelos filtros globais)
     if mes_selecionado != 'Todos os Meses':
         data_inicio, data_fim = obter_periodo_mes_comercial(mes_selecionado)
-        df_vendas = df_vendas_original[
-            (df_vendas_original[st.session_state['col_data']] >= data_inicio) & 
-            (df_vendas_original[st.session_state['col_data']] <= data_fim)
+        df_vendas = df_vendas[
+            (df_vendas[st.session_state['col_data']] >= data_inicio) & 
+            (df_vendas[st.session_state['col_data']] <= data_fim)
         ].copy()
         
-        if not df_devolucoes_original.empty:
-            df_devolucoes = df_devolucoes_original[
-                (df_devolucoes_original[st.session_state['col_data']] >= data_inicio) & 
-                (df_devolucoes_original[st.session_state['col_data']] <= data_fim)
+        if not df_devolucoes.empty:
+            df_devolucoes = df_devolucoes[
+                (df_devolucoes[st.session_state['col_data']] >= data_inicio) & 
+                (df_devolucoes[st.session_state['col_data']] <= data_fim)
             ].copy()
         
         st.sidebar.info(f"📅 Período: {data_inicio.strftime('%d/%m/%Y')} a {data_fim.strftime('%d/%m/%Y')}")
