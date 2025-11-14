@@ -215,7 +215,8 @@ if len(meses_comerciais_disponiveis) >= 2:
         vendas_linha_2.columns = ['Linha', 'Valor_2']
         
         comparativo_linha = vendas_linha_1.merge(vendas_linha_2, on='Linha', how='outer').fillna(0)
-        comparativo_linha['Variacao'] = ((comparativo_linha['Valor_1'] - comparativo_linha['Valor_2']) / comparativo_linha['Valor_2'] * 100).round(2)
+        # Variação: quanto o atual (Valor_2) cresceu em relação ao anterior (Valor_1)
+        comparativo_linha['Variacao'] = ((comparativo_linha['Valor_2'] - comparativo_linha['Valor_1']) / comparativo_linha['Valor_1'] * 100).replace([float('inf'), -float('inf')], 0).fillna(0).round(2)
         comparativo_linha = comparativo_linha.sort_values('Valor_1', ascending=False)
         
         # Gráfico
@@ -224,13 +225,17 @@ if len(meses_comerciais_disponiveis) >= 2:
             name=mes_1,
             x=comparativo_linha['Linha'],
             y=comparativo_linha['Valor_1'],
-            marker_color='#1f77b4'
+            marker_color='#1f77b4',
+            text=[formatar_moeda(v) for v in comparativo_linha['Valor_1']],
+            textposition='outside'
         ))
         fig_linhas.add_trace(go.Bar(
             name=mes_2,
             x=comparativo_linha['Linha'],
             y=comparativo_linha['Valor_2'],
-            marker_color='#ff7f0e'
+            marker_color='#ff7f0e',
+            text=[formatar_moeda(v) for v in comparativo_linha['Valor_2']],
+            textposition='outside'
         ))
         fig_linhas.update_layout(
             barmode='group',
