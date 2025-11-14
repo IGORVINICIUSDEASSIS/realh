@@ -668,20 +668,32 @@ with tab_comparativo:
         if 'data_clean' in st.session_state and not st.session_state.data_clean.empty:
             df_temporal = st.session_state.data_clean.copy()
             
-            # Filtrar apenas vendedores selecionados
-            df_temporal_filt = df_temporal[df_temporal['Vendedor'].isin(vendedores_selecionados)]
+            # Usar a coluna de vendedor da sessão
+            col_vendedor = st.session_state.get('col_vendedor', 'Vendedor')
             
-            if not df_temporal_filt.empty:
-                # Agrupar por mês comercial e vendedor
-                df_evolucao = df_temporal_filt.groupby(['Mês Comercial', 'Vendedor']).agg({
-                    'Valor Líquido': 'sum',
-                    'Valor Devolvido': 'sum',
-                    'Quantidade': 'sum'
-                }).reset_index()
+            # Verificar se a coluna existe
+            if col_vendedor in df_temporal.columns:
+                # Filtrar apenas vendedores selecionados
+                df_temporal_filt = df_temporal[df_temporal[col_vendedor].isin(vendedores_selecionados)]
                 
-                # Calcular vendas (valor líquido + devoluções)
-                df_evolucao['Vendas'] = df_evolucao['Valor Líquido'] + abs(df_evolucao['Valor Devolvido'])
-                df_evolucao['Devoluções'] = abs(df_evolucao['Valor Devolvido'])
+                if not df_temporal_filt.empty:
+                    # Agrupar por mês comercial e vendedor
+                    df_evolucao = df_temporal_filt.groupby(['Mes_Comercial', col_vendedor]).agg({
+                        st.session_state['col_valor']: 'sum',
+                        st.session_state['col_dev']: 'sum'
+                    }).reset_index()
+                    
+                    # Renomear colunas para padronizar
+                    df_evolucao = df_evolucao.rename(columns={
+                        'Mes_Comercial': 'Mês Comercial',
+                        col_vendedor: 'Vendedor',
+                        st.session_state['col_valor']: 'Valor Líquido',
+                        st.session_state['col_dev']: 'Valor Devolvido'
+                    })
+                
+                    # Calcular vendas (valor líquido + devoluções)
+                    df_evolucao['Vendas'] = df_evolucao['Valor Líquido'] + abs(df_evolucao['Valor Devolvido'])
+                    df_evolucao['Devoluções'] = abs(df_evolucao['Valor Devolvido'])
                 
                 # Gráfico de evolução de vendas
                 fig_evolucao = go.Figure()
@@ -736,9 +748,7 @@ with tab_comparativo:
                     use_container_width=True,
                     hide_index=True
                 )
-            
             else:
-                st.warning("⚠️ Não há dados temporais disponíveis para os vendedores selecionados.")
-        
+                st.warning(f"⚠️ Coluna '{col_vendedor}' não encontrada nos dados temporais.")
         else:
             st.warning("⚠️ Dados temporais não disponíveis para análise evolutiva.")
