@@ -123,12 +123,13 @@ if len(meses_comerciais_disponiveis) >= 2:
         st.markdown("**📈 Variação**")
         st.markdown(f"*{mes_1} vs {mes_2}*")
         
-        var_vendas = ((valor_total_1 - valor_total_2) / valor_total_2 * 100) if valor_total_2 > 0 else 0
-        var_dev = ((valor_dev_1 - valor_dev_2) / valor_dev_2 * 100) if valor_dev_2 > 0 else 0
-        var_liquido = ((valor_liquido_1 - valor_liquido_2) / valor_liquido_2 * 100) if valor_liquido_2 > 0 else 0
-        var_clientes = ((clientes_unicos_1 - clientes_unicos_2) / clientes_unicos_2 * 100) if clientes_unicos_2 > 0 else 0
-        var_pedidos = ((pedidos_unicos_1 - pedidos_unicos_2) / pedidos_unicos_2 * 100) if pedidos_unicos_2 > 0 else 0
-        var_ticket = ((ticket_medio_1 - ticket_medio_2) / ticket_medio_2 * 100) if ticket_medio_2 > 0 else 0
+        # Variação: quanto o mês atual (mes_2) variou em relação ao anterior (mes_1)
+        var_vendas = ((valor_total_2 - valor_total_1) / valor_total_1 * 100) if valor_total_1 > 0 else 0
+        var_dev = ((valor_dev_2 - valor_dev_1) / valor_dev_1 * 100) if valor_dev_1 > 0 else 0
+        var_liquido = ((valor_liquido_2 - valor_liquido_1) / valor_liquido_1 * 100) if valor_liquido_1 > 0 else 0
+        var_clientes = ((clientes_unicos_2 - clientes_unicos_1) / clientes_unicos_1 * 100) if clientes_unicos_1 > 0 else 0
+        var_pedidos = ((pedidos_unicos_2 - pedidos_unicos_1) / pedidos_unicos_1 * 100) if pedidos_unicos_1 > 0 else 0
+        var_ticket = ((ticket_medio_2 - ticket_medio_1) / ticket_medio_1 * 100) if ticket_medio_1 > 0 else 0
         
         st.metric("💰 Vendas", f"{var_vendas:+.1f}%", delta=f"{var_vendas:+.1f}%")
         st.metric("↩️ Devoluções", f"{var_dev:+.1f}%", delta=f"{var_dev:+.1f}%", delta_color="inverse")
