@@ -610,12 +610,6 @@ with tab2:
                             valor_final = valor_hierarquia[0] if len(valor_hierarquia) == 1 else valor_hierarquia
                             hierarquia = {'nivel': nivel_hierarquia, 'valor': valor_final}
                         
-                        # Debug
-                        st.warning(f"🔍 DEBUG - Nível selecionado: {nivel_hierarquia}")
-                        st.warning(f"🔍 DEBUG - Valores selecionados: {valor_hierarquia}")
-                        st.warning(f"🔍 DEBUG - Hierarquia que será salva: {hierarquia}")
-                        
-                        st.info(f"🔄 Tentando criar usuário: {new_username}")
                         success, msg = add_user(new_username, new_password, new_nome, new_tipo, hierarquia)
                         
                         if success:

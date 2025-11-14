@@ -75,27 +75,8 @@ if user_hierarchy and user_hierarchy.get('nivel'):
     else:
         st.info(f"🔒 Visualizando dados de: **{valor}** ({user_hierarchy.get('nivel')})")
     
-    # Debug
-    st.warning(f"🔍 DEBUG - Total de registros ANTES do filtro: {len(df_vendas_central):,}")
-    st.json(user_hierarchy)
-    
     df_vendas_filtrado = apply_hierarchy_filter(df_vendas_central, user_hierarchy, config)
     df_devolucoes_filtrado = apply_hierarchy_filter(df_devolucoes_central, user_hierarchy, config) if not df_devolucoes_central.empty else pd.DataFrame()
-    
-    st.warning(f"🔍 DEBUG - Total de registros DEPOIS do filtro: {len(df_vendas_filtrado):,}")
-    
-    # Verificar qual coluna está sendo usada
-    nivel_coluna_map = {
-        'diretor': config.get('col_diretor'),
-        'gerente_regional': config.get('col_gerente_regional'),
-        'gerente': config.get('col_gerente'),
-        'supervisor': config.get('col_supervisor'),
-        'coordenador': config.get('col_coordenador'),
-        'consultor': config.get('col_consultor'),
-        'vendedor': config.get('col_vendedor')
-    }
-    coluna_filtro = nivel_coluna_map.get(user_hierarchy.get('nivel'))
-    st.warning(f"🔍 DEBUG - Coluna do filtro: {coluna_filtro}")
 else:
     df_vendas_filtrado = df_vendas_central.copy()
     df_devolucoes_filtrado = df_devolucoes_central.copy()
