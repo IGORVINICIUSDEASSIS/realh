@@ -489,31 +489,35 @@ with tab2:
                         if not edit_nome:
                             st.error("⚠️ O nome não pode estar vazio")
                         else:
-                        try:
-                            # Preparar hierarquia
-                            edit_hierarquia = {}
-                            if edit_nivel != "Nenhum (Admin - vê tudo)" and edit_valor:
-                                # Se só tiver um valor, salvar como string; se múltiplos, como lista
-                                valor_final = edit_valor[0] if len(edit_valor) == 1 else edit_valor
-                                edit_hierarquia = {'nivel': edit_nivel, 'valor': valor_final}
-                            
-                            # Preparar dados para atualização
-                            update_data = {
-                                'nome': edit_nome,
-                                'tipo': edit_tipo,
-                                'hierarquia': hierarquia
-                            }
-                            
-                            # Adicionar senha apenas se foi informada
-                            if edit_password:
-                                update_data['password'] = edit_password
-                            
-                            success, msg = update_user(user_to_edit, **update_data)
-                            if success:
-                                st.success(msg)
-                                st.rerun()
-                            else:
-                                st.error(msg)
+                            try:
+                                # Preparar hierarquia
+                                edit_hierarquia = {}
+                                if edit_nivel != "Nenhum (Admin - vê tudo)" and edit_valor:
+                                    # Se só tiver um valor, salvar como string; se múltiplos, como lista
+                                    valor_final = edit_valor[0] if len(edit_valor) == 1 else edit_valor
+                                    edit_hierarquia = {'nivel': edit_nivel, 'valor': valor_final}
+                                
+                                # Preparar dados para atualização
+                                update_data = {
+                                    'nome': edit_nome,
+                                    'tipo': edit_tipo,
+                                    'hierarquia': edit_hierarquia
+                                }
+                                
+                                # Adicionar senha apenas se foi informada
+                                if edit_password:
+                                    update_data['password'] = edit_password
+                                
+                                success, msg = update_user(user_to_edit, **update_data)
+                                if success:
+                                    st.success(msg)
+                                    st.rerun()
+                                else:
+                                    st.error(msg)
+                            except Exception as e:
+                                st.error(f"❌ Erro ao atualizar usuário: {str(e)}")
+                                import traceback
+                                st.code(traceback.format_exc())
                 
                 with col_btn2:
                     if st.button("🗑️ Excluir Usuário", type="secondary", use_container_width=True, key='btn_delete_user'):
