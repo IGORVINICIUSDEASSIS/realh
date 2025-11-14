@@ -313,9 +313,18 @@ with tab2:
                 
                 users = load_users()
                 st.info(f"🔍 Verificando usuário: **{test_username}**")
+                st.code(f"Username digitado: '{test_username}' (length: {len(test_username)})")
                 
                 if test_username in users:
                     st.success(f"✓ Usuário existe no sistema")
+                    
+                    # Mostrar dados completos do usuário
+                    user_info = users[test_username]
+                    st.json({
+                        "nome": user_info.get('nome'),
+                        "tipo": user_info.get('tipo'),
+                        "hierarquia": user_info.get('hierarquia', {})
+                    })
                     
                     # Mostrar hash salvo vs hash testado
                     saved_hash = users[test_username]['password']
@@ -332,11 +341,17 @@ with tab2:
                     # Testar a função authenticate
                     user_data = authenticate(test_username, test_password)
                     if user_data:
-                        st.success(f"✅ authenticate() retornou: {user_data['nome']}")
+                        st.success(f"✅ authenticate() retornou dados do usuário:")
+                        st.json({
+                            "nome": user_data.get('nome'),
+                            "tipo": user_data.get('tipo'),
+                            "hierarquia": user_data.get('hierarquia', {})
+                        })
                     else:
                         st.error("❌ authenticate() retornou None")
                 else:
                     st.error(f"❌ Usuário '{test_username}' não existe")
+                    st.info(f"Usuários disponíveis: {list(users.keys())}")
             else:
                 st.warning("Preencha usuário e senha para testar")
     
