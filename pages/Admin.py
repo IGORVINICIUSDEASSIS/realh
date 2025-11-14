@@ -68,6 +68,16 @@ with tab1:
                         st.dataframe(df_upload.head(10))
                         st.caption(f"Colunas disponíveis: {', '.join(df_upload.columns.tolist())}")
                     
+                    # Campo para data/hora do upload
+                    st.subheader("📅 Informações do Upload")
+                    data_hora_upload = st.text_input(
+                        "Data e Hora da Atualização dos Dados",
+                        value=pd.Timestamp.now().strftime("%d/%m/%Y %H:%M"),
+                        help="Informe quando os dados foram atualizados. Formato: DD/MM/AAAA HH:MM"
+                    )
+                    
+                    st.markdown("---")
+                    
                     # Configuração de colunas
                     st.subheader("🔧 Configurar Mapeamento de Colunas")
                     
@@ -217,7 +227,8 @@ with tab1:
                                     'col_gerente': col_gerente,
                                     'col_supervisor': col_supervisor,
                                     'col_coordenador': col_coordenador,
-                                    'col_consultor': col_consultor
+                                    'col_consultor': col_consultor,
+                                    'data_hora_upload': data_hora_upload
                                 }
                                 
                                 # Salvar

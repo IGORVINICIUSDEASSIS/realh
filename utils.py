@@ -225,6 +225,23 @@ def exibir_logo():
     Exibe o logotipo no canto superior direito da página.
     Procura o arquivo logotipo.png na pasta assets.
     """
+    # Exibir informações na sidebar
+    with st.sidebar:
+        # Exibir usuário logado
+        if 'authenticated' in st.session_state and st.session_state['authenticated']:
+            user_data = st.session_state.get('user_data', {})
+            st.markdown(f"**👤 Usuário:** {user_data.get('nome', 'N/A')}")
+            st.markdown(f"**🔑 Tipo:** {user_data.get('tipo', 'N/A').title()}")
+            
+            # Exibir data/hora do último upload se existir
+            config = st.session_state.get('config', {})
+            if config and 'data_hora_upload' in config:
+                st.markdown("---")
+                st.markdown(f"**📅 Última Atualização:**")
+                st.markdown(f"*{config['data_hora_upload']}*")
+            
+            st.markdown("---")
+    
     logo_path = os.path.join(os.path.dirname(__file__), "assets", "logotipo.png")
     
     if os.path.exists(logo_path):
