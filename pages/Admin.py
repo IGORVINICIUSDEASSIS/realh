@@ -58,8 +58,8 @@ with tab1:
         if uploaded_file:
             with st.spinner("Processando planilha..."):
                 try:
-                    # Ler planilha
-                    df_upload = pd.read_excel(uploaded_file)
+                    # Ler planilha SEM conversão automática de tipos
+                    df_upload = pd.read_excel(uploaded_file, dtype=str)
                     
                     st.success(f"✅ Planilha lida com sucesso! {len(df_upload):,} registros")
                     
@@ -141,6 +141,16 @@ with tab1:
                             try:
                                 # Converter data APENAS na coluna selecionada
                                 df_upload[col_data] = pd.to_datetime(df_upload[col_data], errors='coerce')
+                                
+                                # Converter valor para numérico
+                                df_upload[col_valor] = pd.to_numeric(df_upload[col_valor], errors='coerce')
+                                
+                                # Converter quantidade e toneladas se existirem
+                                if col_quantidade and col_quantidade != 'Nenhuma':
+                                    df_upload[col_quantidade] = pd.to_numeric(df_upload[col_quantidade], errors='coerce')
+                                
+                                if col_toneladas and col_toneladas != 'Nenhuma':
+                                    df_upload[col_toneladas] = pd.to_numeric(df_upload[col_toneladas], errors='coerce')
                                 
                                 # Remover linhas com datas inválidas
                                 linhas_antes = len(df_upload)
