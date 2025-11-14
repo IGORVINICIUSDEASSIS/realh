@@ -155,19 +155,17 @@ if len(meses_comerciais_disponiveis) >= 2:
             name=mes_1,
             x=['Vendas', 'Devoluções', 'Líquido'],
             y=[valor_total_1, valor_dev_1, valor_liquido_1],
-            marker_color=['#1f77b4', '#d62728', '#2ca02c'],  # Azul, Vermelho, Verde
+            marker_color='#1f77b4',
             text=[formatar_moeda(valor_total_1), formatar_moeda(valor_dev_1), formatar_moeda(valor_liquido_1)],
-            textposition='outside',
-            showlegend=True
+            textposition='outside'
         ))
         fig_valores.add_trace(go.Bar(
             name=mes_2,
             x=['Vendas', 'Devoluções', 'Líquido'],
             y=[valor_total_2, valor_dev_2, valor_liquido_2],
-            marker_color=['#6baed6', '#fc8d62', '#66c2a5'],  # Azul claro, Vermelho claro, Verde claro
+            marker_color='#ff7f0e',
             text=[formatar_moeda(valor_total_2), formatar_moeda(valor_dev_2), formatar_moeda(valor_liquido_2)],
-            textposition='outside',
-            showlegend=True
+            textposition='outside'
         ))
         fig_valores.update_layout(
             barmode='group',
