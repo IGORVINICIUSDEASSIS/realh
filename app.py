@@ -14,6 +14,16 @@ create_default_admin()
 
 # Verificar se está autenticado
 if 'authenticated' not in st.session_state or not st.session_state['authenticated']:
+    # Ocultar todas as páginas exceto Login usando CSS
+    st.markdown("""
+    <style>
+        /* Ocultar todas as páginas da sidebar exceto Login */
+        [data-testid="stSidebarNav"] li:not(:nth-child(1)) {
+            display: none;
+        }
+    </style>
+    """, unsafe_allow_html=True)
+    
     st.title("🏢 Real H - Sistema de Análise de Vendas")
     st.markdown("---")
     
