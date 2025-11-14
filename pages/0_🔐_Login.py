@@ -17,6 +17,24 @@ if 'authenticated' not in st.session_state:
     st.session_state['authenticated'] = False
     st.session_state['user_data'] = None
 
+# Ocultar páginas se não autenticado
+if not st.session_state['authenticated']:
+    st.markdown("""
+    <style>
+        /* Ocultar navegação da sidebar exceto a primeira página (Login) */
+        [data-testid="stSidebarNav"] ul li:not(:first-child) {
+            display: none !important;
+        }
+        section[data-testid="stSidebarNav"] ul li:not(:first-child) {
+            display: none !important;
+        }
+        /* Alternativa para versões diferentes do Streamlit */
+        .css-1544g2n li:not(:first-child) {
+            display: none !important;
+        }
+    </style>
+    """, unsafe_allow_html=True)
+
 # Se já está autenticado, redirecionar
 if st.session_state['authenticated']:
     st.success(f"✅ Você já está logado como **{st.session_state['user_data']['nome']}**")

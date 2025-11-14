@@ -17,9 +17,16 @@ if 'authenticated' not in st.session_state or not st.session_state['authenticate
     # Ocultar todas as páginas exceto Login usando CSS
     st.markdown("""
     <style>
-        /* Ocultar todas as páginas da sidebar exceto Login */
-        [data-testid="stSidebarNav"] li:not(:nth-child(1)) {
-            display: none;
+        /* Ocultar navegação da sidebar exceto a primeira página (Login) */
+        [data-testid="stSidebarNav"] ul li:not(:first-child) {
+            display: none !important;
+        }
+        section[data-testid="stSidebarNav"] ul li:not(:first-child) {
+            display: none !important;
+        }
+        /* Alternativa para versões diferentes do Streamlit */
+        .css-1544g2n li:not(:first-child) {
+            display: none !important;
         }
     </style>
     """, unsafe_allow_html=True)
