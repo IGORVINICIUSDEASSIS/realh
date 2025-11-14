@@ -14,17 +14,6 @@ st.set_page_config(
 # Exibir logo
 exibir_logo()
 
-# CSS para remover "a" da numeração na sidebar
-st.markdown("""
-<style>
-    /* Remove o 'a' dos itens 3a e 5a na sidebar */
-    [data-testid="stSidebarNav"] ul li a[href*="3a"] span::first-letter,
-    [data-testid="stSidebarNav"] ul li a[href*="5a"] span::first-letter {
-        font-size: 0;
-    }
-</style>
-""", unsafe_allow_html=True)
-
 st.title("📊 Dashboard de Vendas - Real H")
 st.markdown("### Bem-vindo ao Sistema de Análise de Vendas")
 
