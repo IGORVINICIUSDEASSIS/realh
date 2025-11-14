@@ -146,6 +146,12 @@ if not st.session_state.get('df_devolucoes_original', pd.DataFrame()).empty:
 # INFORMAÇÕES E NAVEGAÇÃO
 # ==============================
 st.markdown("---")
+
+# Exibir data/hora da última atualização se existir
+data_hora_upload = config.get('data_hora_upload')
+if data_hora_upload:
+    st.info(f"📅 **Última Atualização dos Dados:** {data_hora_upload}")
+
 st.info("👈 **Use o menu lateral para navegar entre as páginas de análise:**\n\n"
         "- 📊 **Dashboard** - Visão geral e indicadores principais\n"
         "- 📈 **Comparativos** - Compare períodos e linhas\n"
