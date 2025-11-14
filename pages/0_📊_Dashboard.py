@@ -6,6 +6,12 @@ from utils import formatar_moeda, obter_periodo_mes_comercial, ordenar_mes_comer
 
 st.set_page_config(page_title="Dashboard", page_icon="📊", layout="wide")
 
+# Verificar autenticação
+if 'authenticated' not in st.session_state or not st.session_state['authenticated']:
+    st.warning("⚠️ Você precisa fazer login primeiro!")
+    st.info("👉 Clique em **'🔐 Login'** no menu lateral")
+    st.stop()
+
 exibir_logo()
 
 st.title("📊 Dashboard - Visão Geral")
