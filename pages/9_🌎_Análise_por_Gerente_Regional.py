@@ -137,7 +137,9 @@ with tab_visao_geral:
         exibir_top_com_alternancia(top_10_vendas_display, "🏆 Top Gerentes por Faturamento", "gerentes_top_vendas", tipo_grafico='bar')
     
     with col_top2:
-        top_10_dev = df_gerentes_analise[df_gerentes_analise['Devoluções'] > 0].nlargest(10, 'Taxa Dev. (%)')[['Devoluções', 'Taxa Dev. (%)']].reset_index()
+        df_com_dev = df_gerentes_analise[df_gerentes_analise['Devoluções'] != 0].copy()
+        df_com_dev['Taxa_Dev_Abs'] = df_com_dev['Taxa Dev. (%)'].abs()
+        top_10_dev = df_com_dev.nlargest(10, 'Taxa_Dev_Abs')[['Devoluções', 'Taxa Dev. (%)']].reset_index()
         if len(top_10_dev) > 0:
             top_10_dev.columns = ['Gerente', 'Devoluções', 'Taxa (%)']
             top_10_dev['Devoluções'] = top_10_dev['Devoluções'].apply(formatar_moeda)

@@ -126,7 +126,14 @@ if len(meses_comerciais_disponiveis) >= 2:
         
         # Variação: quanto o mês atual (mes_2) variou em relação ao anterior (mes_1)
         var_vendas = ((valor_total_2 - valor_total_1) / valor_total_1 * 100) if valor_total_1 > 0 else 0
-        var_dev = ((valor_dev_2 - valor_dev_1) / valor_dev_1 * 100) if valor_dev_1 > 0 else 0
+        
+        # Cálculo especial para devoluções (lógica inversa: aumento = ruim = positivo)
+        if valor_dev_1 != 0:
+            # Para devoluções, invertemos o sinal: se devoluções aumentam (valor fica mais negativo), mostra positivo
+            var_dev = ((abs(valor_dev_2) - abs(valor_dev_1)) / abs(valor_dev_1) * 100)
+        else:
+            var_dev = 0 if valor_dev_2 == 0 else 100  # Se não havia devolução e agora há, é 100% de aumento
+        
         var_liquido = ((valor_liquido_2 - valor_liquido_1) / valor_liquido_1 * 100) if valor_liquido_1 > 0 else 0
         var_clientes = ((clientes_unicos_2 - clientes_unicos_1) / clientes_unicos_1 * 100) if clientes_unicos_1 > 0 else 0
         var_pedidos = ((pedidos_unicos_2 - pedidos_unicos_1) / pedidos_unicos_1 * 100) if pedidos_unicos_1 > 0 else 0

@@ -95,6 +95,13 @@ if meses_comerciais_disponiveis:
 df_temporal = df_vendas.copy()
 df_temporal['Data'] = pd.to_datetime(df_temporal[st.session_state['col_data']])
 
+# Preparar dados de devoluções também
+if not df_devolucoes.empty:
+    df_dev_temporal = df_devolucoes.copy()
+    df_dev_temporal['Data'] = pd.to_datetime(df_dev_temporal[st.session_state['col_data']])
+else:
+    df_dev_temporal = pd.DataFrame()
+
 # Preparar dados conforme o tipo de análise
 if analise_tipo == "dia":
     st.markdown("### 📊 Análise por Data (Diária) com Tendência")
@@ -102,6 +109,16 @@ if analise_tipo == "dia":
     vendas_por_periodo = df_temporal.groupby('Data')[st.session_state['col_valor']].sum().reset_index()
     vendas_por_periodo = vendas_por_periodo.sort_values('Data')
     vendas_por_periodo.columns = ['Período', 'Vendas']
+    
+    # Adicionar devoluções
+    if not df_dev_temporal.empty:
+        dev_por_periodo = df_dev_temporal.groupby('Data')[st.session_state['col_valor']].sum().reset_index()
+        dev_por_periodo.columns = ['Período', 'Devoluções']
+        vendas_por_periodo = vendas_por_periodo.merge(dev_por_periodo, on='Período', how='left').fillna(0)
+    else:
+        vendas_por_periodo['Devoluções'] = 0
+    
+    vendas_por_periodo['Líquido'] = vendas_por_periodo['Vendas'] - vendas_por_periodo['Devoluções']
     label_periodo = 'Data'
     
     if len(vendas_por_periodo) > 5:
@@ -115,16 +132,19 @@ if analise_tipo == "dia":
         fig.add_trace(go.Scatter(x=vendas_por_periodo['Período'], y=vendas_por_periodo['Upper'], fill=None, mode='lines', line_color='rgba(0,0,0,0)', showlegend=False))
         fig.add_trace(go.Scatter(x=vendas_por_periodo['Período'], y=vendas_por_periodo['Lower'], fillcolor='rgba(100, 150, 255, 0.2)', fill='tonexty', mode='lines', line_color='rgba(0,0,0,0)', name='Banda de Confiança (±1σ)'))
         fig.add_trace(go.Scatter(x=vendas_por_periodo['Período'], y=vendas_por_periodo['Vendas'], mode='lines', name='Vendas Diárias', line=dict(color='#90EE90', width=1, dash='dot'), opacity=0.5))
-        fig.add_trace(go.Scatter(x=vendas_por_periodo['Período'], y=vendas_por_periodo['MM7'], mode='lines', name='Tendência (7 dias)', line=dict(color='#FFA15A', width=2)))
-        fig.add_trace(go.Scatter(x=vendas_por_periodo['Período'], y=vendas_por_periodo['MM30'], mode='lines', name='Tendência (30 dias)', line=dict(color='#636EFA', width=3)))
-        fig.update_layout(title="Evolução Diária com Tendências", xaxis_title="Data", yaxis_title="Faturamento (R$)", hovermode='x unified', height=500, template='plotly_white')
+        fig.add_trace(go.Scatter(x=vendas_por_periodo['Período'], y=vendas_por_periodo['Devoluções'], mode='lines', name='Devoluções Diárias', line=dict(color='#FF6B6B', width=1, dash='dot'), opacity=0.5))
+        fig.add_trace(go.Scatter(x=vendas_por_periodo['Período'], y=vendas_por_periodo['Líquido'], mode='lines', name='Faturamento Líquido', line=dict(color='#4ECDC4', width=2)))
+        fig.add_trace(go.Scatter(x=vendas_por_periodo['Período'], y=vendas_por_periodo['MM7'], mode='lines', name='Tendência Vendas (7 dias)', line=dict(color='#FFA15A', width=2)))
+        fig.add_trace(go.Scatter(x=vendas_por_periodo['Período'], y=vendas_por_periodo['MM30'], mode='lines', name='Tendência Vendas (30 dias)', line=dict(color='#636EFA', width=3)))
+        fig.update_layout(title="Evolução Diária: Vendas, Devoluções e Líquido", xaxis_title="Data", yaxis_title="Faturamento (R$)", hovermode='x unified', height=500, template='plotly_white')
         st.plotly_chart(fig, use_container_width=True)
         
-        col_stat1, col_stat2, col_stat3, col_stat4 = st.columns(4)
-        col_stat1.metric("📊 Média Diária", formatar_moeda(vendas_por_periodo['Vendas'].mean()))
-        col_stat2.metric("📈 Máximo", formatar_moeda(vendas_por_periodo['Vendas'].max()))
-        col_stat3.metric("📉 Mínimo", formatar_moeda(vendas_por_periodo['Vendas'].min()))
-        col_stat4.metric("📌 Volatilidade", f"R$ {vendas_por_periodo['Vendas'].std():,.0f}")
+        col_stat1, col_stat2, col_stat3, col_stat4, col_stat5 = st.columns(5)
+        col_stat1.metric("📊 Média Vendas", formatar_moeda(vendas_por_periodo['Vendas'].mean()))
+        col_stat2.metric("↩️ Média Devoluções", formatar_moeda(vendas_por_periodo['Devoluções'].mean()))
+        col_stat3.metric("💵 Média Líquido", formatar_moeda(vendas_por_periodo['Líquido'].mean()))
+        col_stat4.metric("📈 Máx Líquido", formatar_moeda(vendas_por_periodo['Líquido'].max()))
+        col_stat5.metric("📉 Mín Líquido", formatar_moeda(vendas_por_periodo['Líquido'].min()))
 
 elif analise_tipo == "dia_semana":
     st.markdown("### 📅 Análise por Dia da Semana")
@@ -138,10 +158,31 @@ elif analise_tipo == "dia_semana":
     vendas_por_periodo.columns = ['Dia_Num', 'Período', 'Vendas', 'Quantidade', 'Ticket_Médio']
     vendas_por_periodo = vendas_por_periodo.sort_values('Dia_Num')
     
-    fig = go.Figure(go.Bar(x=vendas_por_periodo['Período'], y=vendas_por_periodo['Vendas'], 
-                           marker_color=['#00CC96' if x == vendas_por_periodo['Vendas'].max() else '#636EFA' for x in vendas_por_periodo['Vendas']],
-                           text=vendas_por_periodo['Vendas'].apply(lambda x: formatar_moeda(x)), textposition='auto'))
-    fig.update_layout(title="Vendas por Dia da Semana", xaxis_title="Dia da Semana", yaxis_title="Faturamento (R$)", height=400)
+    # Adicionar devoluções por dia da semana
+    if not df_dev_temporal.empty:
+        df_dev_temporal['Dia_Semana'] = df_dev_temporal['Data'].dt.day_name()
+        df_dev_temporal['Dia_Num'] = df_dev_temporal['Data'].dt.dayofweek
+        df_dev_temporal['Dia_Semana'] = df_dev_temporal['Dia_Num'].map(mapa_dias)
+        
+        dev_por_periodo = df_dev_temporal.groupby(['Dia_Num', 'Dia_Semana'])[st.session_state['col_valor']].sum().reset_index()
+        dev_por_periodo.columns = ['Dia_Num', 'Período', 'Devoluções']
+        vendas_por_periodo = vendas_por_periodo.merge(dev_por_periodo, on=['Dia_Num', 'Período'], how='left').fillna(0)
+    else:
+        vendas_por_periodo['Devoluções'] = 0
+    
+    vendas_por_periodo['Líquido'] = vendas_por_periodo['Vendas'] - vendas_por_periodo['Devoluções']
+    
+    # Gráfico com vendas, devoluções e líquido
+    fig = go.Figure()
+    fig.add_trace(go.Bar(name='Vendas', x=vendas_por_periodo['Período'], y=vendas_por_periodo['Vendas'], 
+                         marker_color='#636EFA', text=vendas_por_periodo['Vendas'].apply(formatar_moeda), textposition='outside'))
+    fig.add_trace(go.Bar(name='Devoluções', x=vendas_por_periodo['Período'], y=vendas_por_periodo['Devoluções'], 
+                         marker_color='#FF6B6B', text=vendas_por_periodo['Devoluções'].apply(formatar_moeda), textposition='outside'))
+    fig.add_trace(go.Bar(name='Líquido', x=vendas_por_periodo['Período'], y=vendas_por_periodo['Líquido'], 
+                         marker_color='#4ECDC4', text=vendas_por_periodo['Líquido'].apply(formatar_moeda), textposition='outside'))
+    
+    fig.update_layout(title="Vendas, Devoluções e Líquido por Dia da Semana", xaxis_title="Dia da Semana", 
+                     yaxis_title="Faturamento (R$)", height=500, barmode='group')
     st.plotly_chart(fig, use_container_width=True)
     
     melhor_dia = vendas_por_periodo.loc[vendas_por_periodo['Vendas'].idxmax()]
@@ -161,13 +202,33 @@ elif analise_tipo == "semana":
     vendas_por_periodo = df_temporal.groupby('Semana_Label')[st.session_state['col_valor']].sum().reset_index()
     vendas_por_periodo.columns = ['Período', 'Vendas']
     
-    fig = go.Figure(go.Bar(x=vendas_por_periodo['Período'], y=vendas_por_periodo['Vendas'], marker_color='#636EFA',
-                           text=vendas_por_periodo['Vendas'].apply(lambda x: formatar_moeda(x)), textposition='auto'))
-    fig.update_layout(title="Vendas por Semana", xaxis_title="Semana", yaxis_title="Faturamento (R$)", height=400)
+    # Adicionar devoluções por semana
+    if not df_dev_temporal.empty:
+        df_dev_temporal['Semana'] = df_dev_temporal['Data'].dt.isocalendar().week
+        df_dev_temporal['Ano'] = df_dev_temporal['Data'].dt.year
+        df_dev_temporal['Semana_Label'] = "Sem " + df_dev_temporal['Semana'].astype(str) + "/" + df_dev_temporal['Ano'].astype(str)
+        
+        dev_por_periodo = df_dev_temporal.groupby('Semana_Label')[st.session_state['col_valor']].sum().reset_index()
+        dev_por_periodo.columns = ['Período', 'Devoluções']
+        vendas_por_periodo = vendas_por_periodo.merge(dev_por_periodo, on='Período', how='left').fillna(0)
+    else:
+        vendas_por_periodo['Devoluções'] = 0
+    
+    vendas_por_periodo['Líquido'] = vendas_por_periodo['Vendas'] - vendas_por_periodo['Devoluções']
+    
+    fig = go.Figure()
+    fig.add_trace(go.Bar(name='Vendas', x=vendas_por_periodo['Período'], y=vendas_por_periodo['Vendas'], marker_color='#636EFA'))
+    fig.add_trace(go.Bar(name='Devoluções', x=vendas_por_periodo['Período'], y=vendas_por_periodo['Devoluções'], marker_color='#FF6B6B'))
+    fig.add_trace(go.Bar(name='Líquido', x=vendas_por_periodo['Período'], y=vendas_por_periodo['Líquido'], marker_color='#4ECDC4'))
+    
+    fig.update_layout(title="Vendas, Devoluções e Líquido por Semana", xaxis_title="Semana", 
+                     yaxis_title="Faturamento (R$)", height=500, barmode='group')
     st.plotly_chart(fig, use_container_width=True)
     
-    col_stat1, col_stat2, col_stat3 = st.columns(3)
-    col_stat1.metric("📊 Média por Semana", formatar_moeda(vendas_por_periodo['Vendas'].mean()))
+    col_stat1, col_stat2, col_stat3, col_stat4 = st.columns(4)
+    col_stat1.metric("📊 Média Vendas", formatar_moeda(vendas_por_periodo['Vendas'].mean()))
+    col_stat2.metric("↩️ Média Devoluções", formatar_moeda(vendas_por_periodo['Devoluções'].mean()))
+    col_stat3.metric("💵 Média Líquido", formatar_moeda(vendas_por_periodo['Líquido'].mean()))
     col_stat2.metric("📈 Semana com Maior Venda", formatar_moeda(vendas_por_periodo['Vendas'].max()))
     col_stat3.metric("📉 Semana com Menor Venda", formatar_moeda(vendas_por_periodo['Vendas'].min()))
 
@@ -197,19 +258,36 @@ elif analise_tipo == "mes_comercial":
     vendas_por_periodo['Ordem'] = vendas_por_periodo['Período'].apply(ordenar_mes_comercial)
     vendas_por_periodo = vendas_por_periodo.sort_values('Ordem')
     
+    # Adicionar devoluções por mês comercial
+    if not df_devolucoes_original.empty:
+        dev_por_periodo = df_devolucoes_original.groupby('Mes_Comercial')[st.session_state['col_valor']].sum().reset_index()
+        dev_por_periodo.columns = ['Período', 'Devoluções']
+        vendas_por_periodo = vendas_por_periodo.merge(dev_por_periodo, on='Período', how='left').fillna(0)
+    else:
+        vendas_por_periodo['Devoluções'] = 0
+    
+    vendas_por_periodo['Líquido'] = vendas_por_periodo['Vendas'] - vendas_por_periodo['Devoluções']
+    
     if len(vendas_por_periodo) > 1:
         vendas_por_periodo['Crescimento'] = vendas_por_periodo['Vendas'].pct_change() * 100
         
-        fig = go.Figure(go.Bar(x=vendas_por_periodo['Período'], y=vendas_por_periodo['Vendas'], marker_color='#00CC96',
-                               text=vendas_por_periodo['Vendas'].apply(lambda x: f'{x/1e6:.1f}M' if x > 1e6 else f'{x/1e3:.0f}K'),
-                               textposition='auto'))
-        fig.update_layout(title="Vendas por Mês Comercial", xaxis_title="Mês Comercial", yaxis_title="Faturamento (R$)", height=400)
+        fig = go.Figure()
+        fig.add_trace(go.Bar(name='Vendas', x=vendas_por_periodo['Período'], y=vendas_por_periodo['Vendas'], 
+                           marker_color='#636EFA', text=vendas_por_periodo['Vendas'].apply(lambda x: f'{x/1e6:.1f}M' if x > 1e6 else f'{x/1e3:.0f}K')))
+        fig.add_trace(go.Bar(name='Devoluções', x=vendas_por_periodo['Período'], y=vendas_por_periodo['Devoluções'], 
+                           marker_color='#FF6B6B'))
+        fig.add_trace(go.Bar(name='Líquido', x=vendas_por_periodo['Período'], y=vendas_por_periodo['Líquido'], 
+                           marker_color='#4ECDC4'))
+        
+        fig.update_layout(title="Vendas, Devoluções e Líquido por Mês Comercial", xaxis_title="Mês Comercial", 
+                         yaxis_title="Faturamento (R$)", height=500, barmode='group')
         st.plotly_chart(fig, use_container_width=True)
         
-        col_stat1, col_stat2, col_stat3 = st.columns(3)
-        col_stat1.metric("📊 Média por Mês", formatar_moeda(vendas_por_periodo['Vendas'].mean()))
-        col_stat2.metric("📈 Maior Venda", formatar_moeda(vendas_por_periodo['Vendas'].max()))
-        col_stat3.metric("📉 Menor Venda", formatar_moeda(vendas_por_periodo['Vendas'].min()))
+        col_stat1, col_stat2, col_stat3, col_stat4 = st.columns(4)
+        col_stat1.metric("📊 Média Vendas", formatar_moeda(vendas_por_periodo['Vendas'].mean()))
+        col_stat2.metric("↩️ Média Devoluções", formatar_moeda(vendas_por_periodo['Devoluções'].mean()))
+        col_stat3.metric("💵 Média Líquido", formatar_moeda(vendas_por_periodo['Líquido'].mean()))
+        col_stat4.metric("📈 Crescimento Médio", f"{vendas_por_periodo['Crescimento'].mean():.1f}%")
 
 st.markdown("---")
 
