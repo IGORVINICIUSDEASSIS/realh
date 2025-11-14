@@ -92,7 +92,7 @@ df_produtos_analise = df_produtos_analise.sort_values('Vendas', ascending=False)
 # ==============================
 # ABAS DE ANÁLISE
 # ==============================
-tab_visao_geral, tab_detalhes, tab_evolucao = st.tabs(["📊 Visão Geral", "🔍 Detalhes do Produto", "📈 Evolução"])
+tab_visao_geral, tab_detalhes, tab_evolucao, tab_comparativo = st.tabs(["📊 Visão Geral", "🔍 Detalhes do Produto", "📈 Evolução", "⚖️ Comparativo"])
 
 # ==============================
 # ABA: VISÃO GERAL
@@ -451,3 +451,121 @@ with tab_evolucao:
         )
         
         st.plotly_chart(fig_clientes, use_container_width=True)
+
+# ==============================
+# ABA COMPARATIVO TEMPORAL
+# ==============================
+with tab_comparativo:
+    st.markdown("### ⚖️ Comparativo Temporal - Análise Detalhada")
+    
+    # Filtro de seleção múltipla dentro da aba
+    st.markdown("#### 🎯 Selecione os Produtos para Comparar")
+    
+    produtos_disponiveis = df_produtos_analise.index.tolist()
+    
+    # Botão para selecionar todos os produtos
+    col_filter, col_button = st.columns([3, 1])
+    
+    with col_button:
+        if st.button("🎯 Selecionar Todos", help="Selecionar todos os produtos disponíveis", key="select_all_products"):
+            st.session_state.produtos_selecionados_comparativo = produtos_disponiveis
+    
+    with col_filter:
+        produtos_selecionados = st.multiselect(
+            "🔍 Escolha os produtos para análise comparativa:",
+            options=produtos_disponiveis,
+            default=st.session_state.get('produtos_selecionados_comparativo', produtos_disponiveis[:5] if len(produtos_disponiveis) >= 5 else produtos_disponiveis),
+            help="Selecione um ou mais produtos para ver a evolução temporal comparativa",
+            key="multiselect_products_comp"
+        )
+    
+    if len(produtos_selecionados) == 0:
+        st.warning("⚠️ Selecione pelo menos um produto para ver o comparativo.")
+    else:
+        # Filtrar dados apenas dos produtos selecionados
+        df_produtos_filtrado = df_vendas[df_vendas[col_produto].isin(produtos_selecionados)]
+        
+        if not df_produtos_filtrado.empty:
+            # Evolução por mês comercial
+            evolucao_produtos = df_produtos_filtrado.groupby(['Mes_Comercial', col_produto])[st.session_state['col_valor']].sum().reset_index()
+            
+            # Gráfico de evolução dos produtos selecionados
+            fig_evolucao_prod = go.Figure()
+            
+            cores_produtos = ['#636EFA', '#EF553B', '#00CC96', '#AB63FA', '#FFA15A', '#19D3F3', '#FF6692', '#B6E880', '#FF97FF', '#FECB52']
+            
+            for idx, produto in enumerate(produtos_selecionados):
+                dados_produto = evolucao_produtos[evolucao_produtos[col_produto] == produto]
+                dados_produto = dados_produto.sort_values('Mes_Comercial', key=lambda x: x.map(ordenar_mes_comercial))
+                
+                fig_evolucao_prod.add_trace(go.Scatter(
+                    x=dados_produto['Mes_Comercial'],
+                    y=dados_produto[st.session_state['col_valor']],
+                    mode='lines+markers',
+                    name=produto,
+                    line=dict(color=cores_produtos[idx % len(cores_produtos)], width=3),
+                    marker=dict(size=8),
+                    hovertemplate='<b>%{fullData.name}</b><br>Mês: %{x}<br>Vendas: R$ %{y:,.0f}<extra></extra>'
+                ))
+            
+            fig_evolucao_prod.update_layout(
+                title="📈 Evolução Temporal dos Produtos Selecionados",
+                xaxis_title="Mês Comercial",
+                yaxis_title="Faturamento (R$)",
+                hovermode='x unified',
+                height=500,
+                showlegend=True,
+                legend=dict(
+                    orientation="h",
+                    yanchor="bottom",
+                    y=1.02,
+                    xanchor="right",
+                    x=1
+                )
+            )
+            
+            st.plotly_chart(fig_evolucao_prod, use_container_width=True)
+            
+            # Tabela comparativa
+            st.markdown("#### 📋 Tabela Comparativa por Mês")
+            
+            tabela_pivot_prod = evolucao_produtos.pivot(index='Mes_Comercial', columns=col_produto, values=st.session_state['col_valor']).fillna(0)
+            tabela_pivot_prod = tabela_pivot_prod.reindex(sorted(tabela_pivot_prod.index, key=ordenar_mes_comercial))
+            
+            # Formatear valores
+            tabela_display_prod = tabela_pivot_prod.copy()
+            for col in tabela_display_prod.columns:
+                tabela_display_prod[col] = tabela_display_prod[col].apply(formatar_moeda)
+            
+            st.dataframe(tabela_display_prod, use_container_width=True)
+            
+            # Métricas comparativas
+            st.markdown("#### 📊 Métricas Comparativas")
+            
+            col_met1, col_met2, col_met3 = st.columns(3)
+            
+            with col_met1:
+                st.markdown("**💰 Total por Produto:**")
+                for produto in produtos_selecionados:
+                    total_produto = tabela_pivot_prod[produto].sum() if produto in tabela_pivot_prod.columns else 0
+                    st.metric(produto[:30] + "..." if len(produto) > 30 else produto, formatar_moeda(total_produto))
+            
+            with col_met2:
+                st.markdown("**📈 Crescimento (último vs primeiro):**")
+                for produto in produtos_selecionados:
+                    if produto in tabela_pivot_prod.columns and len(tabela_pivot_prod) > 1:
+                        primeiro = tabela_pivot_prod[produto].iloc[0]
+                        ultimo = tabela_pivot_prod[produto].iloc[-1]
+                        crescimento = ((ultimo - primeiro) / primeiro * 100) if primeiro > 0 else 0
+                        st.metric(produto[:30] + "..." if len(produto) > 30 else produto, f"{crescimento:+.1f}%")
+            
+            with col_met3:
+                st.markdown("**📊 Participação no Total:**")
+                total_geral_prod = tabela_pivot_prod.sum().sum()
+                for produto in produtos_selecionados:
+                    if produto in tabela_pivot_prod.columns:
+                        participacao = (tabela_pivot_prod[produto].sum() / total_geral_prod * 100) if total_geral_prod > 0 else 0
+                        st.metric(produto[:30] + "..." if len(produto) > 30 else produto, f"{participacao:.1f}%")
+        
+        else:
+            st.info("Não há dados para os produtos selecionados no período atual.")

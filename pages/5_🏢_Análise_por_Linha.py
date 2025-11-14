@@ -99,7 +99,7 @@ df_linhas_analise = df_linhas_analise.sort_values('Vendas', ascending=False)
 # ==============================
 # ABAS DE ANÁLISE
 # ==============================
-tab_metricas, tab_insights, tab_detalhes, tab_evolucao = st.tabs(["📊 Visão Geral", "🔍 Insights", "📋 Detalhamento", "📈 Evolução"])
+tab_metricas, tab_insights, tab_detalhes, tab_evolucao, tab_comparativo = st.tabs(["📊 Visão Geral", "🔍 Insights", "📋 Detalhamento", "📈 Evolução", "⚖️ Comparativo"])
 
 # ==============================
 # ABA: VISÃO GERAL
@@ -526,4 +526,122 @@ with tab_evolucao:
                 st.plotly_chart(fig_top_ton, use_container_width=True)
             else:
                 st.info("Dados de toneladas não disponíveis")
+
+# ==============================
+# ABA COMPARATIVO TEMPORAL
+# ==============================
+with tab_comparativo:
+    st.markdown("### ⚖️ Comparativo Temporal - Análise Detalhada")
+    
+    # Filtro de seleção múltipla dentro da aba
+    st.markdown("#### 🎯 Selecione as Linhas para Comparar")
+    
+    linhas_disponiveis = df_linhas_analise.index.tolist()
+    
+    # Botão para selecionar todas as linhas
+    col_filter, col_button = st.columns([3, 1])
+    
+    with col_button:
+        if st.button("🎯 Selecionar Todas", help="Selecionar todas as linhas disponíveis", key="select_all_lines"):
+            st.session_state.linhas_selecionadas_comparativo = linhas_disponiveis
+    
+    with col_filter:
+        linhas_selecionadas = st.multiselect(
+            "🔍 Escolha as linhas para análise comparativa:",
+            options=linhas_disponiveis,
+            default=st.session_state.get('linhas_selecionadas_comparativo', linhas_disponiveis[:5] if len(linhas_disponiveis) >= 5 else linhas_disponiveis),
+            help="Selecione uma ou mais linhas para ver a evolução temporal comparativa",
+            key="multiselect_lines_comp"
+        )
+    
+    if len(linhas_selecionadas) == 0:
+        st.warning("⚠️ Selecione pelo menos uma linha para ver o comparativo.")
+    else:
+        # Filtrar dados apenas das linhas selecionadas
+        df_linhas_filtrado = df_vendas[df_vendas[col_linha].isin(linhas_selecionadas)]
+        
+        if not df_linhas_filtrado.empty:
+            # Evolução por mês comercial
+            evolucao_linhas = df_linhas_filtrado.groupby(['Mes_Comercial', col_linha])[st.session_state['col_valor']].sum().reset_index()
+            
+            # Gráfico de evolução das linhas selecionadas
+            fig_evolucao = go.Figure()
+            
+            cores_linhas = ['#636EFA', '#EF553B', '#00CC96', '#AB63FA', '#FFA15A', '#19D3F3', '#FF6692', '#B6E880', '#FF97FF', '#FECB52']
+            
+            for idx, linha in enumerate(linhas_selecionadas):
+                dados_linha = evolucao_linhas[evolucao_linhas[col_linha] == linha]
+                dados_linha = dados_linha.sort_values('Mes_Comercial', key=lambda x: x.map(ordenar_mes_comercial))
+                
+                fig_evolucao.add_trace(go.Scatter(
+                    x=dados_linha['Mes_Comercial'],
+                    y=dados_linha[st.session_state['col_valor']],
+                    mode='lines+markers',
+                    name=linha,
+                    line=dict(color=cores_linhas[idx % len(cores_linhas)], width=3),
+                    marker=dict(size=8),
+                    hovertemplate='<b>%{fullData.name}</b><br>Mês: %{x}<br>Vendas: R$ %{y:,.0f}<extra></extra>'
+                ))
+            
+            fig_evolucao.update_layout(
+                title="📈 Evolução Temporal das Linhas Selecionadas",
+                xaxis_title="Mês Comercial",
+                yaxis_title="Faturamento (R$)",
+                hovermode='x unified',
+                height=500,
+                showlegend=True,
+                legend=dict(
+                    orientation="h",
+                    yanchor="bottom",
+                    y=1.02,
+                    xanchor="right",
+                    x=1
+                )
+            )
+            
+            st.plotly_chart(fig_evolucao, use_container_width=True)
+            
+            # Tabela comparativa
+            st.markdown("#### 📋 Tabela Comparativa por Mês")
+            
+            tabela_pivot = evolucao_linhas.pivot(index='Mes_Comercial', columns=col_linha, values=st.session_state['col_valor']).fillna(0)
+            tabela_pivot = tabela_pivot.reindex(sorted(tabela_pivot.index, key=ordenar_mes_comercial))
+            
+            # Formatear valores
+            tabela_display = tabela_pivot.copy()
+            for col in tabela_display.columns:
+                tabela_display[col] = tabela_display[col].apply(formatar_moeda)
+            
+            st.dataframe(tabela_display, use_container_width=True)
+            
+            # Métricas comparativas
+            st.markdown("#### 📊 Métricas Comparativas")
+            
+            col_met1, col_met2, col_met3 = st.columns(3)
+            
+            with col_met1:
+                st.markdown("**💰 Total por Linha:**")
+                for linha in linhas_selecionadas:
+                    total_linha = tabela_pivot[linha].sum() if linha in tabela_pivot.columns else 0
+                    st.metric(linha, formatar_moeda(total_linha))
+            
+            with col_met2:
+                st.markdown("**📈 Crescimento (último vs primeiro):**")
+                for linha in linhas_selecionadas:
+                    if linha in tabela_pivot.columns and len(tabela_pivot) > 1:
+                        primeiro = tabela_pivot[linha].iloc[0]
+                        ultimo = tabela_pivot[linha].iloc[-1]
+                        crescimento = ((ultimo - primeiro) / primeiro * 100) if primeiro > 0 else 0
+                        st.metric(linha, f"{crescimento:+.1f}%")
+            
+            with col_met3:
+                st.markdown("**📊 Participação no Total:**")
+                total_geral = tabela_pivot.sum().sum()
+                for linha in linhas_selecionadas:
+                    if linha in tabela_pivot.columns:
+                        participacao = (tabela_pivot[linha].sum() / total_geral * 100) if total_geral > 0 else 0
+                        st.metric(linha, f"{participacao:.1f}%")
+        
+        else:
+            st.info("Não há dados para as linhas selecionadas no período atual.")
 

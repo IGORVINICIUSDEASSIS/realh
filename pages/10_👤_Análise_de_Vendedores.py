@@ -92,7 +92,13 @@ df_vendedores_analise = df_vendedores_analise.sort_values('Vendas', ascending=Fa
 # ==============================
 # ABAS DE ANÁLISE
 # ==============================
-tab_visao_geral, tab_detalhes, tab_evolucao, tab_ranking = st.tabs(["📊 Visão Geral", "🔍 Detalhes do Vendedor", "📈 Evolução", "🏆 Ranking"])
+tab_visao_geral, tab_detalhes, tab_evolucao, tab_ranking, tab_comparativo = st.tabs([
+    "📊 Visão Geral", 
+    "🔍 Detalhes do Vendedor", 
+    "📈 Evolução", 
+    "🏆 Ranking",
+    "🔍 Comparativo Selecionados"
+])
 
 # ==============================
 # ABA: VISÃO GERAL
@@ -536,3 +542,203 @@ with tab_ranking:
         )
         
         st.plotly_chart(fig_dev, use_container_width=True)
+
+# ==============================
+# ABA: COMPARATIVO SELECIONADOS
+# ==============================
+with tab_comparativo:
+    st.markdown("### 🔍 Análise Comparativa - Análise Detalhada")
+    
+    # Filtro de seleção múltipla dentro da aba
+    st.markdown("#### 🎯 Selecione os Vendedores para Comparar")
+    
+    vendedores_disponiveis = df_vendedores_analise.index.tolist()
+    
+    # Botão para selecionar todos os vendedores
+    col_filter, col_button = st.columns([3, 1])
+    
+    with col_button:
+        if st.button("🎯 Selecionar Todos", help="Selecionar todos os vendedores disponíveis", key="select_all_vendors"):
+            st.session_state.vendedores_selecionados_comparativo = vendedores_disponiveis
+    
+    with col_filter:
+        vendedores_selecionados = st.multiselect(
+            "🔍 Escolha os vendedores para análise comparativa:",
+            options=vendedores_disponiveis,
+            default=st.session_state.get('vendedores_selecionados_comparativo', vendedores_disponiveis[:5] if len(vendedores_disponiveis) >= 5 else vendedores_disponiveis),
+            help="Selecione um ou mais vendedores para ver a evolução temporal comparativa",
+            key="multiselect_vendors_comp"
+        )
+    
+    if len(vendedores_selecionados) < 2:
+        st.info("📝 Selecione pelo menos 2 vendedores para ver análises comparativas detalhadas.")
+        
+        # Mostrar análise individual para 1 vendedor
+        if vendedores_selecionados:
+            vendedor = vendedores_selecionados[0]
+            st.markdown(f"#### 👤 Análise Individual: {vendedor}")
+            
+            # Dados do vendedor
+            dados_vendedor = df_vendedores_analise.loc[vendedor]
+            
+            col1, col2, col3, col4 = st.columns(4)
+            with col1:
+                st.metric(
+                    "💰 Vendas", 
+                    f"R$ {dados_vendedor['Vendas']:,.0f}",
+                    help="Total de vendas do vendedor"
+                )
+            
+            with col2:
+                st.metric(
+                    "↩️ Devoluções", 
+                    f"R$ {abs(dados_vendedor['Devoluções']):,.0f}",
+                    help="Total de devoluções do vendedor"
+                )
+            
+            with col3:
+                st.metric(
+                    "📊 Líquido", 
+                    f"R$ {dados_vendedor['Líquido']:,.0f}",
+                    help="Vendas líquidas (vendas - devoluções)"
+                )
+            
+            with col4:
+                st.metric(
+                    "📈 Taxa Dev.", 
+                    f"{dados_vendedor['Taxa Dev. (%)']:.1f}%",
+                    help="Taxa de devolução sobre vendas"
+                )
+    
+    else:
+        # Análise comparativa para múltiplos vendedores
+        st.markdown("#### 📊 Comparação de Performance")
+        
+        # Filtrar dados dos vendedores selecionados
+        df_comparativo = df_vendedores_analise.loc[vendedores_selecionados].copy()
+        
+        # Gráfico comparativo de vendas
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            fig_vendas = go.Figure()
+            fig_vendas.add_trace(go.Bar(
+                x=df_comparativo.index,
+                y=df_comparativo['Vendas'],
+                marker_color='#1f77b4',
+                text=df_comparativo['Vendas'].apply(lambda x: f"R$ {x:,.0f}"),
+                textposition='outside',
+                name='Vendas'
+            ))
+            
+            fig_vendas.update_layout(
+                title="💰 Comparativo de Vendas",
+                xaxis_title="Vendedor",
+                yaxis_title="Vendas (R$)",
+                height=400,
+                xaxis={'tickangle': 45}
+            )
+            
+            st.plotly_chart(fig_vendas, use_container_width=True)
+        
+        with col2:
+            fig_dev = go.Figure()
+            fig_dev.add_trace(go.Bar(
+                x=df_comparativo.index,
+                y=df_comparativo['Taxa Dev. (%)'],
+                marker_color='#EF553B',
+                text=df_comparativo['Taxa Dev. (%)'].apply(lambda x: f"{x:.1f}%"),
+                textposition='outside',
+                name='Taxa Devolução'
+            ))
+            
+            fig_dev.update_layout(
+                title="📈 Comparativo Taxa de Devolução",
+                xaxis_title="Vendedor",
+                yaxis_title="Taxa Devolução (%)",
+                height=400,
+                xaxis={'tickangle': 45}
+            )
+            
+            st.plotly_chart(fig_dev, use_container_width=True)
+        
+        # Evolução temporal comparativa
+        st.markdown("#### 📅 Evolução Temporal Comparativa")
+        
+        if 'data_clean' in st.session_state and not st.session_state.data_clean.empty:
+            df_temporal = st.session_state.data_clean.copy()
+            
+            # Filtrar apenas vendedores selecionados
+            df_temporal_filt = df_temporal[df_temporal['Vendedor'].isin(vendedores_selecionados)]
+            
+            if not df_temporal_filt.empty:
+                # Agrupar por mês comercial e vendedor
+                df_evolucao = df_temporal_filt.groupby(['Mês Comercial', 'Vendedor']).agg({
+                    'Valor Líquido': 'sum',
+                    'Valor Devolvido': 'sum',
+                    'Quantidade': 'sum'
+                }).reset_index()
+                
+                # Calcular vendas (valor líquido + devoluções)
+                df_evolucao['Vendas'] = df_evolucao['Valor Líquido'] + abs(df_evolucao['Valor Devolvido'])
+                df_evolucao['Devoluções'] = abs(df_evolucao['Valor Devolvido'])
+                
+                # Gráfico de evolução de vendas
+                fig_evolucao = go.Figure()
+                
+                cores = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f']
+                
+                for i, vendedor in enumerate(vendedores_selecionados):
+                    dados_vendedor = df_evolucao[df_evolucao['Vendedor'] == vendedor]
+                    
+                    if not dados_vendedor.empty:
+                        fig_evolucao.add_trace(go.Scatter(
+                            x=dados_vendedor['Mês Comercial'],
+                            y=dados_vendedor['Vendas'],
+                            mode='lines+markers',
+                            name=vendedor,
+                            line=dict(color=cores[i % len(cores)], width=3),
+                            marker=dict(size=8)
+                        ))
+                
+                fig_evolucao.update_layout(
+                    title="📈 Evolução de Vendas por Vendedor",
+                    xaxis_title="Mês Comercial",
+                    yaxis_title="Vendas (R$)",
+                    height=500,
+                    hovermode='x unified',
+                    legend=dict(
+                        orientation="h",
+                        yanchor="bottom",
+                        y=1.02,
+                        xanchor="right",
+                        x=1
+                    )
+                )
+                
+                st.plotly_chart(fig_evolucao, use_container_width=True)
+                
+                # Tabela comparativa detalhada
+                st.markdown("#### 📋 Tabela Comparativa")
+                
+                # Preparar dados para tabela
+                df_tabela = df_comparativo.round(2)
+                df_tabela = df_tabela.reset_index()
+                
+                # Formatar valores monetários
+                for col in ['Vendas', 'Devoluções', 'Líquido']:
+                    df_tabela[col] = df_tabela[col].apply(lambda x: f"R$ {x:,.2f}")
+                
+                df_tabela['Taxa Dev. (%)'] = df_tabela['Taxa Dev. (%)'].apply(lambda x: f"{x:.1f}%")
+                
+                st.dataframe(
+                    df_tabela,
+                    use_container_width=True,
+                    hide_index=True
+                )
+            
+            else:
+                st.warning("⚠️ Não há dados temporais disponíveis para os vendedores selecionados.")
+        
+        else:
+            st.warning("⚠️ Dados temporais não disponíveis para análise evolutiva.")
