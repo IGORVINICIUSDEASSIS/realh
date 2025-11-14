@@ -117,10 +117,18 @@ def validate_password_strength(password):
 
 def load_users():
     """Carrega lista de usuários do arquivo JSON"""
-    if USERS_FILE.exists():
-        with open(USERS_FILE, 'r', encoding='utf-8') as f:
-            return json.load(f)
-    return {}
+    # Se não existe users.json, criar a partir do template
+    if not USERS_FILE.exists():
+        template_file = DATA_DIR / "users.json.template"
+        if template_file.exists():
+            import shutil
+            shutil.copy(template_file, USERS_FILE)
+        else:
+            # Criar arquivo vazio se template não existe
+            return {}
+    
+    with open(USERS_FILE, 'r', encoding='utf-8') as f:
+        return json.load(f)
 
 def save_users(users):
     """Salva lista de usuários no arquivo JSON"""

@@ -3,6 +3,7 @@ data/*.parquet
 data/config.json
 data/security_logs.json
 data/login_attempts.json
+data/users.json
 *.parquet
 .streamlit/secrets.toml
 
