@@ -3,7 +3,7 @@ import pandas as pd
 import plotly.graph_objects as go
 import sys
 sys.path.append('/workspaces/realh')
-from utils import formatar_moeda, ordenar_mes_comercial, obter_periodo_mes_comercial, exibir_logo
+from utils import formatar_moeda, ordenar_mes_comercial, obter_periodo_mes_comercial, exibir_logo, exibir_top_com_alternancia
 
 st.set_page_config(page_title="Análise por Gerente Regional", page_icon="🌎", layout="wide")
 
@@ -130,22 +130,19 @@ with tab_visao_geral:
     col_top1, col_top2 = st.columns(2)
     
     with col_top1:
-        st.markdown("#### 🏆 Top 10 Gerentes Regionais por Faturamento")
-        top_10_vendas = df_gerentes_analise.nlargest(10, 'Vendas')[['Vendas', 'Quantidade', 'Toneladas']]
-        for idx, (gerente, row) in enumerate(top_10_vendas.iterrows(), 1):
-            info_extra = ""
-            if row['Quantidade'] > 0:
-                info_extra += f" | {row['Quantidade']:,.0f} un"
-            if row['Toneladas'] > 0:
-                info_extra += f" | {row['Toneladas']:,.2f} Tn"
-            st.write(f"{idx}. **{gerente}**: {formatar_moeda(row['Vendas'])}{info_extra}")
+        top_10_vendas = df_gerentes_analise.nlargest(10, 'Vendas')[['Vendas', 'Quantidade', 'Toneladas']].reset_index()
+        top_10_vendas.columns = ['Gerente', 'Faturamento', 'Quantidade', 'Toneladas']
+        top_10_vendas['Faturamento'] = top_10_vendas['Faturamento'].apply(formatar_moeda)
+        top_10_vendas_display = top_10_vendas[['Gerente', 'Faturamento']]
+        exibir_top_com_alternancia(top_10_vendas_display, "🏆 Top Gerentes por Faturamento", "gerentes_top_vendas", tipo_grafico='bar')
     
     with col_top2:
-        st.markdown("#### ⚠️ Top 10 Gerentes com Maior Devolução")
-        top_10_dev = df_gerentes_analise[df_gerentes_analise['Devoluções'] > 0].nlargest(10, 'Taxa Dev. (%)')[['Devoluções', 'Taxa Dev. (%)']]
+        top_10_dev = df_gerentes_analise[df_gerentes_analise['Devoluções'] > 0].nlargest(10, 'Taxa Dev. (%)')[['Devoluções', 'Taxa Dev. (%)']].reset_index()
         if len(top_10_dev) > 0:
-            for idx, (gerente, row) in enumerate(top_10_dev.iterrows(), 1):
-                st.write(f"{idx}. **{gerente}**: {formatar_moeda(row['Devoluções'])} ({row['Taxa Dev. (%)']:.1f}%)")
+            top_10_dev.columns = ['Gerente', 'Devoluções', 'Taxa (%)']
+            top_10_dev['Devoluções'] = top_10_dev['Devoluções'].apply(formatar_moeda)
+            top_10_dev['Taxa (%)'] = top_10_dev['Taxa (%)'].apply(lambda x: f"{x:.1f}%")
+            exibir_top_com_alternancia(top_10_dev, "⚠️ Gerentes com Devolução", "gerentes_top_dev", tipo_grafico='bar')
         else:
             st.info("Nenhuma devolução registrada")
     

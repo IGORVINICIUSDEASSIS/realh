@@ -11,7 +11,14 @@ st.set_page_config(page_title="Comparativos", page_icon="📈", layout="wide")
 
 exibir_logo()
 
-st.title("📈 Análise Comparativa")
+st.title("📈 Análise Comparativa - Monitoramento Temporal")
+
+st.markdown("""
+Compare períodos para entender tendências e monitorar mudanças no negócio:
+- 📊 Período anterior vs. atual
+- 📈 Crescimento ou queda?
+- 🎯 Evolução em relação às metas
+""")
 
 # Verificar se os dados foram carregados
 if 'df_vendas' not in st.session_state or 'df_vendas_original' not in st.session_state:
@@ -31,19 +38,20 @@ meses_comerciais_disponiveis = st.session_state.get('meses_comerciais_disponivei
 st.sidebar.markdown("### 📊 Seleção de Períodos para Comparação")
 
 if len(meses_comerciais_disponiveis) >= 2:
+    # Por padrão: Primeiro mês = anterior (penúltimo), Segundo mês = atual (primeiro)
     mes_1 = st.sidebar.selectbox(
-        "Primeiro Mês:",
+        "Mês Anterior:",
         meses_comerciais_disponiveis,
-        index=0,
-        help="Selecione o primeiro mês para comparação"
+        index=1 if len(meses_comerciais_disponiveis) >= 2 else 0,
+        help="Selecione o mês anterior para comparação"
     )
     
     meses_disponiveis_2 = [m for m in meses_comerciais_disponiveis if m != mes_1]
     mes_2 = st.sidebar.selectbox(
-        "Segundo Mês:",
+        "Mês Atual:",
         meses_disponiveis_2,
         index=0 if len(meses_disponiveis_2) > 0 else 0,
-        help="Selecione o segundo mês para comparação"
+        help="Selecione o mês atual para comparação"
     )
     
     # Obter períodos

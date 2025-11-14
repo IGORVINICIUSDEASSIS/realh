@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import sys
 sys.path.append('/workspaces/realh')
-from utils import formatar_moeda, obter_periodo_mes_comercial, ordenar_mes_comercial, exibir_logo
+from utils import formatar_moeda, obter_periodo_mes_comercial, ordenar_mes_comercial, exibir_logo, exibir_top_com_alternancia
 
 st.set_page_config(page_title="Dashboard", page_icon="📊", layout="wide")
 
@@ -100,6 +100,59 @@ with col_kpi5:
 st.markdown("---")
 
 # ==============================
+# GUIA DE NAVEGAÇÃO
+# ==============================
+with st.expander("📖 **Como Usar Este Dashboard** - Clique para ver o guia de navegação", expanded=False):
+    st.markdown("""
+    #### 🎯 Jornada de Análise Recomendada:
+    
+    **PASSO 1️⃣ - MONITORAMENTO** (Você está aqui)
+    - 📊 **Dashboard** ← Veja como está o negócio
+    - Responde: *Qual é o status dos processos?*
+    - Monitore: KPIs, Faturamento, Devoluções, Volumes
+    
+    **PASSO 2️⃣ - COMPARAÇÃO TEMPORAL**
+    - 📈 **Comparativos** → Como estava vs agora?
+    - Responde: *Cresceu ou caiu? Melhora ou piora?*
+    - Entenda tendências e mudanças
+    
+    **PASSO 3️⃣ - ANÁLISE DE OPORTUNIDADES**
+    - 💡 **Insights** → O que precisa atenção?
+    - Responde: *Qual área precisa otimização?*
+    - Identifique gargalos e oportunidades
+    
+    **PASSO 3a️⃣ - ANÁLISE DE DEVOLUÇÕES** (se houver dados)
+    - ↩️ **Análise de Devoluções** → Devoluções por categorias
+    - Responde: *Por quê os clientes devolvem?*
+    - Entenda padrões de devoluções
+    
+    **PASSO 4️⃣ - EXPLORAÇÃO TEMPORAL**
+    - 📅 **Análise Temporal** → Veja histórico e padrões
+    - Responde: *Qual é a tendência ao longo do tempo?*
+    - Entenda sazonalidade e evolução
+    
+    **PASSO 5️⃣ - ISOLAMENTO E SEGMENTAÇÃO** (Use o Mapa!)
+    - 🗺️ **Mapa de Análise** → Escolha seu ângulo de análise
+    - 🏢 **Análise por Linha** → Performance por linha de negócio
+    - 📦 **Análise de Produtos** → Performance por SKU/Produto
+    - 👤 **Análise de Vendedores** → Performance por vendedor/pessoa
+    - 🌎 **Análise Regional** → Performance por região/gerente
+    
+    **PASSO 6️⃣ - COMUNICAÇÃO EXECUTIVA**
+    - 📄 **Gerar Apresentação** → Crie apresentações profissionais
+    - Use para: Relatórios, Briefings, Apresentações ao board, Compartilhamento com stakeholders
+    - Escolha entre geração automática ou template customizado
+    
+    ---
+    **💡 Dicas:**
+    - Use **Dashboard** como seu monitor diário do negócio
+    - Use **Mapa de Análise** para investigar em profundidade quando algo muda
+    - Use **Apresentação** para comunicar insights e decisões com a liderança
+    """)
+
+st.markdown("---")
+
+# ==============================
 # RESUMO DE MÉTRICAS
 # ==============================
 st.markdown("### 📋 Resumo de Métricas")
@@ -139,36 +192,32 @@ st.markdown("### 🏆 Top 10 - Destaques do Período")
 col_top1, col_top2 = st.columns(2)
 
 with col_top1:
-    st.markdown("#### 👥 Top 10 Clientes")
-    top_clientes = df_vendas.groupby(st.session_state['col_cliente'])[st.session_state['col_valor']].sum().sort_values(ascending=False).head(10).reset_index()
+    top_clientes = df_vendas.groupby(st.session_state['col_cliente'])[st.session_state['col_valor']].sum().sort_values(ascending=False).reset_index()
     top_clientes.columns = ['Cliente', 'Valor']
     top_clientes['Valor'] = top_clientes['Valor'].apply(formatar_moeda)
-    st.dataframe(top_clientes, use_container_width=True, hide_index=True)
+    exibir_top_com_alternancia(top_clientes, "👥 Top Clientes", "dashboard_top_clientes", tipo_grafico='bar')
 
 with col_top2:
-    st.markdown("#### 🛍️ Top 10 Produtos")
-    top_produtos = df_vendas.groupby(st.session_state['col_produto'])[st.session_state['col_valor']].sum().sort_values(ascending=False).head(10).reset_index()
+    top_produtos = df_vendas.groupby(st.session_state['col_produto'])[st.session_state['col_valor']].sum().sort_values(ascending=False).reset_index()
     top_produtos.columns = ['Produto', 'Valor']
     top_produtos['Valor'] = top_produtos['Valor'].apply(formatar_moeda)
-    st.dataframe(top_produtos, use_container_width=True, hide_index=True)
+    exibir_top_com_alternancia(top_produtos, "🛍️ Top Produtos", "dashboard_top_produtos", tipo_grafico='bar')
 
 st.markdown("---")
 
 col_top3, col_top4 = st.columns(2)
 
 with col_top3:
-    st.markdown("#### 🧑‍💼 Top 10 Vendedores")
-    top_vendedores = df_vendas.groupby(st.session_state['col_vendedor'])[st.session_state['col_valor']].sum().sort_values(ascending=False).head(10).reset_index()
+    top_vendedores = df_vendas.groupby(st.session_state['col_vendedor'])[st.session_state['col_valor']].sum().sort_values(ascending=False).reset_index()
     top_vendedores.columns = ['Vendedor', 'Valor']
     top_vendedores['Valor'] = top_vendedores['Valor'].apply(formatar_moeda)
-    st.dataframe(top_vendedores, use_container_width=True, hide_index=True)
+    exibir_top_com_alternancia(top_vendedores, "🧑‍💼 Top Vendedores", "dashboard_top_vendedores", tipo_grafico='bar')
 
 with col_top4:
     if st.session_state.get('col_linha') and st.session_state['col_linha'] != "Nenhuma":
-        st.markdown("#### 📊 Vendas por Linha")
         vendas_linha = df_vendas.groupby(st.session_state['col_linha'])[st.session_state['col_valor']].sum().sort_values(ascending=False).reset_index()
         vendas_linha.columns = ['Linha', 'Valor']
         vendas_linha['Valor'] = vendas_linha['Valor'].apply(formatar_moeda)
-        st.dataframe(vendas_linha, use_container_width=True, hide_index=True)
+        exibir_top_com_alternancia(vendas_linha, "📊 Vendas por Linha", "dashboard_top_linhas", tipo_grafico='pie')
     else:
         st.info("Configurar coluna 'Linha' para ver esta análise")

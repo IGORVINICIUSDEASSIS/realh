@@ -3,7 +3,7 @@ import pandas as pd
 import plotly.graph_objects as go
 import sys
 sys.path.append('/workspaces/realh')
-from utils import formatar_moeda, ordenar_mes_comercial, obter_periodo_mes_comercial, exibir_logo
+from utils import formatar_moeda, ordenar_mes_comercial, obter_periodo_mes_comercial, exibir_logo, exibir_top_com_alternancia
 
 st.set_page_config(page_title="Análise de Vendedores", page_icon="👤", layout="wide")
 
@@ -129,22 +129,19 @@ with tab_visao_geral:
     col_top1, col_top2 = st.columns(2)
     
     with col_top1:
-        st.markdown("#### 🏆 Top 10 Vendedores por Faturamento")
-        top_10_vendas = df_vendedores_analise.nlargest(10, 'Vendas')[['Vendas', 'Quantidade', 'Toneladas']]
-        for idx, (vendedor, row) in enumerate(top_10_vendas.iterrows(), 1):
-            info_extra = ""
-            if row['Quantidade'] > 0:
-                info_extra += f" | {row['Quantidade']:,.0f} un"
-            if row['Toneladas'] > 0:
-                info_extra += f" | {row['Toneladas']:,.2f} Tn"
-            st.write(f"{idx}. **{vendedor}**: {formatar_moeda(row['Vendas'])}{info_extra}")
+        top_10_vendas = df_vendedores_analise.nlargest(10, 'Vendas')[['Vendas', 'Quantidade', 'Toneladas']].reset_index()
+        top_10_vendas.columns = ['Vendedor', 'Faturamento', 'Quantidade', 'Toneladas']
+        top_10_vendas['Faturamento'] = top_10_vendas['Faturamento'].apply(formatar_moeda)
+        top_10_vendas_display = top_10_vendas[['Vendedor', 'Faturamento']]
+        exibir_top_com_alternancia(top_10_vendas_display, "🏆 Top Vendedores por Faturamento", "vendedores_top_vendas", tipo_grafico='bar')
     
     with col_top2:
-        st.markdown("#### ⚠️ Top 10 Vendedores com Maior Devolução")
-        top_10_dev = df_vendedores_analise[df_vendedores_analise['Devoluções'] > 0].nlargest(10, 'Taxa Dev. (%)')[['Devoluções', 'Taxa Dev. (%)']]
+        top_10_dev = df_vendedores_analise[df_vendedores_analise['Devoluções'] > 0].nlargest(10, 'Taxa Dev. (%)')[['Devoluções', 'Taxa Dev. (%)']].reset_index()
         if len(top_10_dev) > 0:
-            for idx, (vendedor, row) in enumerate(top_10_dev.iterrows(), 1):
-                st.write(f"{idx}. **{vendedor}**: {formatar_moeda(row['Devoluções'])} ({row['Taxa Dev. (%)']:.1f}%)")
+            top_10_dev.columns = ['Vendedor', 'Devoluções', 'Taxa (%)']
+            top_10_dev['Devoluções'] = top_10_dev['Devoluções'].apply(formatar_moeda)
+            top_10_dev['Taxa (%)'] = top_10_dev['Taxa (%)'].apply(lambda x: f"{x:.1f}%")
+            exibir_top_com_alternancia(top_10_dev, "⚠️ Vendedores com Devolução", "vendedores_top_dev", tipo_grafico='bar')
         else:
             st.info("Nenhuma devolução registrada")
     
@@ -154,20 +151,22 @@ with tab_visao_geral:
     col_qtde, col_ton = st.columns(2)
     
     with col_qtde:
-        st.markdown("#### 📦 Top 10 Vendedores por Quantidade")
         if col_quantidade != 'Nenhuma' and df_vendedores_analise['Quantidade'].sum() > 0:
-            top_10_qtde = df_vendedores_analise.nlargest(10, 'Quantidade')[['Quantidade', 'Vendas']]
-            for idx, (vendedor, row) in enumerate(top_10_qtde.iterrows(), 1):
-                st.write(f"{idx}. **{vendedor}**: {row['Quantidade']:,.0f} un ({formatar_moeda(row['Vendas'])})")
+            top_10_qtde = df_vendedores_analise.nlargest(10, 'Quantidade')[['Quantidade', 'Vendas']].reset_index()
+            top_10_qtde.columns = ['Vendedor', 'Quantidade', 'Faturamento']
+            top_10_qtde['Faturamento'] = top_10_qtde['Faturamento'].apply(formatar_moeda)
+            top_10_qtde_display = top_10_qtde[['Vendedor', 'Quantidade']]
+            exibir_top_com_alternancia(top_10_qtde_display, "📦 Top Vendedores por Quantidade", "vendedores_top_qtde", tipo_grafico='bar')
         else:
             st.info("Dados de quantidade não disponíveis")
     
     with col_ton:
-        st.markdown("#### ⚖️ Top 10 Vendedores por Toneladas")
         if col_toneladas != 'Nenhuma' and df_vendedores_analise['Toneladas'].sum() > 0:
-            top_10_ton = df_vendedores_analise.nlargest(10, 'Toneladas')[['Toneladas', 'Vendas']]
-            for idx, (vendedor, row) in enumerate(top_10_ton.iterrows(), 1):
-                st.write(f"{idx}. **{vendedor}**: {row['Toneladas']:,.2f} Tn ({formatar_moeda(row['Vendas'])})")
+            top_10_ton = df_vendedores_analise.nlargest(10, 'Toneladas')[['Toneladas', 'Vendas']].reset_index()
+            top_10_ton.columns = ['Vendedor', 'Toneladas', 'Faturamento']
+            top_10_ton['Faturamento'] = top_10_ton['Faturamento'].apply(formatar_moeda)
+            top_10_ton_display = top_10_ton[['Vendedor', 'Toneladas']]
+            exibir_top_com_alternancia(top_10_ton_display, "⚖️ Top Vendedores por Toneladas", "vendedores_top_ton", tipo_grafico='bar')
         else:
             st.info("Dados de toneladas não disponíveis")
     

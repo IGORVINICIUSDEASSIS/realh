@@ -1,6 +1,6 @@
 import streamlit as st
 import pandas as pd
-from utils import calcular_mes_comercial, obter_periodo_mes_comercial, ordenar_mes_comercial, exibir_logo
+from utils import calcular_mes_comercial, obter_periodo_mes_comercial, ordenar_mes_comercial, exibir_logo, exibir_filtros_globais, aplicar_filtros_globais
 
 # ==============================
 # CONFIGURAÇÃO DA PÁGINA
@@ -29,17 +29,81 @@ if 'dados_carregados' not in st.session_state:
 if st.session_state.get('dados_carregados', False) and 'df_vendas' in st.session_state:
     st.success("✅ Dados carregados e processados com sucesso!")
     
+    # ==============================
+    # EXIBIR FILTROS GLOBAIS NA SIDEBAR (Aparece em TODAS as páginas)
+    # ==============================
+    filtros = exibir_filtros_globais(
+        st.session_state['df_vendas_original'],
+        st.session_state['col_cliente'],
+        st.session_state['col_produto'],
+        st.session_state['col_vendedor'],
+        st.session_state['col_linha'],
+        st.session_state['col_data'],
+        col_diretor=st.session_state.get('col_diretor'),
+        col_gerente=st.session_state.get('col_gerente'),
+        col_gerente_regional=st.session_state.get('col_gerente_regional'),
+        col_supervisor=st.session_state.get('col_supervisor'),
+        col_coordenador=st.session_state.get('col_coordenador'),
+        col_consultor=st.session_state.get('col_consultor')
+    )
+    
+    # Aplicar filtros ao df_vendas em session_state
+    df_vendas_filtrado = aplicar_filtros_globais(
+        st.session_state['df_vendas_original'],
+        filtros,
+        st.session_state['col_cliente'],
+        st.session_state['col_produto'],
+        st.session_state['col_vendedor'],
+        st.session_state['col_linha'],
+        st.session_state['col_data'],
+        col_diretor=st.session_state.get('col_diretor'),
+        col_gerente=st.session_state.get('col_gerente'),
+        col_gerente_regional=st.session_state.get('col_gerente_regional'),
+        col_supervisor=st.session_state.get('col_supervisor'),
+        col_coordenador=st.session_state.get('col_coordenador'),
+        col_consultor=st.session_state.get('col_consultor')
+    )
+    
+    # Atualizar session_state com dados filtrados
+    st.session_state['df_vendas'] = df_vendas_filtrado
+    
+    # Aplicar os mesmos filtros em devoluções se existirem
+    if not st.session_state.get('df_devolucoes_original', pd.DataFrame()).empty:
+        df_dev_filtrado = aplicar_filtros_globais(
+            st.session_state['df_devolucoes_original'],
+            filtros,
+            st.session_state['col_cliente'],
+            st.session_state['col_produto'],
+            st.session_state['col_vendedor'],
+            st.session_state['col_linha'],
+            st.session_state['col_data'],
+            col_diretor=st.session_state.get('col_diretor'),
+            col_gerente=st.session_state.get('col_gerente'),
+            col_gerente_regional=st.session_state.get('col_gerente_regional'),
+            col_supervisor=st.session_state.get('col_supervisor'),
+            col_coordenador=st.session_state.get('col_coordenador'),
+            col_consultor=st.session_state.get('col_consultor')
+        )
+        st.session_state['df_devolucoes'] = df_dev_filtrado
+    
     st.info("👈 **Use o menu lateral para navegar entre as páginas de análise:**\n\n"
             "- 📊 **Dashboard** - Visão geral e indicadores principais\n"
             "- 📈 **Comparativos** - Compare períodos e linhas\n"
             "- 💡 **Insights** - Análise de devoluções e recomendações\n"
+            "- 🗺️ **Mapa de Análise** - Navegação rápida para segmentações\n"
             "- 🏢 **Análise por Linha** - Detalhamento por linha de negócio\n"
-            "- 📈 **Gráficos e Evolução** - Visualizações e tendências")
+            "- 📅 **Análise Temporal** - Tendências, padrões e previsões\n"
+            "- 📦 **Análise de Produtos** - Performance por produto\n"
+            "- 👤 **Análise de Vendedores** - Desempenho por vendedor\n"
+            "- 🌎 **Análise Regional** - Análise por gerente/região\n"
+            "- 📄 **Relatório** - Gere apresentações em PPTX\n"
+            "- ⚙️ **Configurações** - Personalize seus templates")
     
     col1, col2 = st.columns([3, 1])
     with col1:
         with st.expander("👀 Visualizar amostra dos dados carregados"):
-            st.dataframe(st.session_state.get('df_vendas', pd.DataFrame()).head(10))
+            st.dataframe(df_vendas_filtrado.head(10))
+            st.info(f"📊 Total de registros após filtros: {len(df_vendas_filtrado):,} de {len(st.session_state['df_vendas_original']):,}")
     with col2:
         st.markdown("###")
         if st.button("🔄 Carregar nova planilha", use_container_width=True):
