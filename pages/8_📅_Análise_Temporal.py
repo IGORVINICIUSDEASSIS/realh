@@ -7,7 +7,7 @@ from scipy import stats
 import sys
 sys.path.append('/workspaces/realh')
 from utils import (calcular_mes_comercial, obter_periodo_mes_comercial, exibir_logo,
-                  exibir_filtros_globais, aplicar_filtros_globais, ordenar_mes_comercial, safe_strftime)
+                  exibir_filtros_globais, aplicar_filtros_globais, ordenar_mes_comercial, safe_strftime, formatar_moeda)
 
 st.set_page_config(page_title="Análise Temporal", page_icon="📅", layout="wide")
 
