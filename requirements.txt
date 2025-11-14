@@ -6,3 +6,4 @@ openpyxl
 matplotlib
 python-pptx
 scipy
+kaleido
