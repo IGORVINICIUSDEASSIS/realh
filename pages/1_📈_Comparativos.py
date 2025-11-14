@@ -154,13 +154,17 @@ if len(meses_comerciais_disponiveis) >= 2:
             name=mes_1,
             x=['Vendas', 'Devoluções', 'Líquido'],
             y=[valor_total_1, valor_dev_1, valor_liquido_1],
-            marker_color='#1f77b4'
+            marker_color='#1f77b4',
+            text=[formatar_moeda(valor_total_1), formatar_moeda(valor_dev_1), formatar_moeda(valor_liquido_1)],
+            textposition='outside'
         ))
         fig_valores.add_trace(go.Bar(
             name=mes_2,
             x=['Vendas', 'Devoluções', 'Líquido'],
             y=[valor_total_2, valor_dev_2, valor_liquido_2],
-            marker_color='#ff7f0e'
+            marker_color='#ff7f0e',
+            text=[formatar_moeda(valor_total_2), formatar_moeda(valor_dev_2), formatar_moeda(valor_liquido_2)],
+            textposition='outside'
         ))
         fig_valores.update_layout(
             barmode='group',
@@ -177,13 +181,17 @@ if len(meses_comerciais_disponiveis) >= 2:
             name=mes_1,
             x=['Clientes', 'Pedidos'],
             y=[clientes_unicos_1, pedidos_unicos_1],
-            marker_color='#2ca02c'
+            marker_color='#2ca02c',
+            text=[f'{clientes_unicos_1:,}', f'{pedidos_unicos_1:,}'],
+            textposition='outside'
         ))
         fig_volume.add_trace(go.Bar(
             name=mes_2,
             x=['Clientes', 'Pedidos'],
             y=[clientes_unicos_2, pedidos_unicos_2],
-            marker_color='#d62728'
+            marker_color='#d62728',
+            text=[f'{clientes_unicos_2:,}', f'{pedidos_unicos_2:,}'],
+            textposition='outside'
         ))
         fig_volume.update_layout(
             barmode='group',
