@@ -537,6 +537,7 @@ def exibir_filtros_globais(df_vendas_original, col_cliente, col_produto, col_ven
         # Inicializar filtros em session_state se não existirem
         if 'filtros_globais' not in st.session_state:
             st.session_state.filtros_globais = {
+                'mes_comercial': 'Todos os Meses',
                 'produtos': [],
                 'vendedores': [],
                 'linhas': [],
@@ -552,6 +553,24 @@ def exibir_filtros_globais(df_vendas_original, col_cliente, col_produto, col_ven
             }
         
         filtros = st.session_state.filtros_globais
+        
+        # -------- MÊS COMERCIAL --------
+        st.markdown("**📅 Mês Comercial**")
+        meses_comerciais_disponiveis = st.session_state.get('meses_comerciais_disponiveis', [])
+        if meses_comerciais_disponiveis:
+            filtro_mes_opcoes = ['Todos os Meses'] + list(meses_comerciais_disponiveis)
+            filtros['mes_comercial'] = st.selectbox(
+                "Selecione o Mês:",
+                filtro_mes_opcoes,
+                index=filtro_mes_opcoes.index(filtros.get('mes_comercial', 'Todos os Meses')) if filtros.get('mes_comercial', 'Todos os Meses') in filtro_mes_opcoes else 0,
+                key='filtro_mes_comercial',
+                help="Mês comercial vai do dia 16 ao dia 15 do mês seguinte"
+            )
+            if filtros['mes_comercial'] != 'Todos os Meses':
+                data_inicio_mes, data_fim_mes = obter_periodo_mes_comercial(filtros['mes_comercial'])
+                st.caption(f"📅 {data_inicio_mes.strftime('%d/%m/%Y')} a {data_fim_mes.strftime('%d/%m/%Y')}")
+        
+        st.markdown("---")
         
         # -------- PRODUTO --------
         st.markdown("**📦 Produtos**")
@@ -722,6 +741,7 @@ def exibir_filtros_globais(df_vendas_original, col_cliente, col_produto, col_ven
         with col_btn1:
             if st.button("🧹 Limpar Filtros", use_container_width=True):
                 st.session_state.filtros_globais = {
+                    'mes_comercial': 'Todos os Meses',
                     'produtos': [],
                     'vendedores': [],
                     'linhas': [],
@@ -792,6 +812,16 @@ def aplicar_filtros_globais(df_original, filtros, col_cliente, col_produto, col_
         DataFrame: DataFrame filtrado (ou original se sem filtros)
     """
     df_filtrado = df_original.copy()
+    
+    # Aplicar filtro de mês comercial PRIMEIRO (tem prioridade sobre date range)
+    if filtros.get('mes_comercial') and filtros['mes_comercial'] != 'Todos os Meses':
+        data_inicio_mes, data_fim_mes = obter_periodo_mes_comercial(filtros['mes_comercial'])
+        df_temp = df_filtrado.copy()
+        df_temp[col_data] = pd.to_datetime(df_temp[col_data])
+        df_filtrado = df_filtrado[
+            (df_temp[col_data] >= data_inicio_mes) & 
+            (df_temp[col_data] <= data_fim_mes)
+        ]
     
     # Se nenhum filtro foi selecionado, retorna todos os dados
     tem_filtro = any([
