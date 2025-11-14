@@ -482,8 +482,20 @@ with tab_comparativo:
     if len(produtos_selecionados) == 0:
         st.warning("⚠️ Selecione pelo menos um produto para ver o comparativo.")
     else:
+        # Debug - mostrar informações dos dados
+        with st.expander("🔍 Debug - Informações dos Dados Produtos", expanded=False):
+            st.write("**Produtos selecionados:**", produtos_selecionados)
+            st.write("**Coluna produto:**", col_produto)
+            st.write("**Dados df_vendas shape:**", df_vendas.shape)
+            st.write("**Colunas df_vendas:**", df_vendas.columns.tolist())
+        
         # Filtrar dados apenas dos produtos selecionados
         df_produtos_filtrado = df_vendas[df_vendas[col_produto].isin(produtos_selecionados)]
+        
+        with st.expander("🔍 Debug - Após Filtro", expanded=False):
+            st.write("**Dados filtrados shape:**", df_produtos_filtrado.shape)
+            if not df_produtos_filtrado.empty:
+                st.write("**Produtos únicos nos dados:**", df_produtos_filtrado[col_produto].unique().tolist())
         
         if not df_produtos_filtrado.empty:
             # Evolução por mês comercial

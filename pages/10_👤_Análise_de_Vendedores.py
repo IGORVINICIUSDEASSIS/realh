@@ -665,6 +665,15 @@ with tab_comparativo:
         # Evolução temporal comparativa
         st.markdown("#### 📅 Evolução Temporal Comparativa")
         
+        # Debug - mostrar informações dos dados
+        with st.expander("🔍 Debug - Informações dos Dados", expanded=False):
+            st.write("**Session State Keys:**", list(st.session_state.keys()))
+            if 'data_clean' in st.session_state:
+                st.write("**Dados disponíveis:**", not st.session_state.data_clean.empty)
+                st.write("**Colunas disponíveis:**", st.session_state.data_clean.columns.tolist())
+            col_vendedor = st.session_state.get('col_vendedor', 'Vendedor')
+            st.write("**Coluna vendedor esperada:**", col_vendedor)
+        
         if 'data_clean' in st.session_state and not st.session_state.data_clean.empty:
             df_temporal = st.session_state.data_clean.copy()
             

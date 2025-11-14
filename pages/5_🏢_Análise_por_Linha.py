@@ -557,8 +557,20 @@ with tab_comparativo:
     if len(linhas_selecionadas) == 0:
         st.warning("⚠️ Selecione pelo menos uma linha para ver o comparativo.")
     else:
+        # Debug - mostrar informações dos dados
+        with st.expander("🔍 Debug - Informações dos Dados Linhas", expanded=False):
+            st.write("**Linhas selecionadas:**", linhas_selecionadas)
+            st.write("**Coluna linha:**", col_linha)
+            st.write("**Dados df_vendas shape:**", df_vendas.shape)
+            st.write("**Colunas df_vendas:**", df_vendas.columns.tolist())
+        
         # Filtrar dados apenas das linhas selecionadas
         df_linhas_filtrado = df_vendas[df_vendas[col_linha].isin(linhas_selecionadas)]
+        
+        with st.expander("🔍 Debug - Após Filtro Linhas", expanded=False):
+            st.write("**Dados filtrados shape:**", df_linhas_filtrado.shape)
+            if not df_linhas_filtrado.empty:
+                st.write("**Linhas únicas nos dados:**", df_linhas_filtrado[col_linha].unique().tolist())
         
         if not df_linhas_filtrado.empty:
             # Evolução por mês comercial
