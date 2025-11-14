@@ -1,0 +1,19 @@
+# Dados sensíveis
+data/
+*.parquet
+.streamlit/secrets.toml
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+*.egg-info/
+
+# Temporários
+*.tmp
+temp_*
+*.log

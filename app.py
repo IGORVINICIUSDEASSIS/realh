@@ -1,6 +1,9 @@
 import streamlit as st
 import pandas as pd
+import sys
+sys.path.append('/workspaces/realh')
 from utils import calcular_mes_comercial, obter_periodo_mes_comercial, ordenar_mes_comercial, exibir_logo, exibir_filtros_globais, aplicar_filtros_globais
+from auth import load_vendas_data, apply_hierarchy_filter
 
 # ==============================
 # CONFIGURAÇÃO DA PÁGINA
@@ -11,11 +14,55 @@ st.set_page_config(
     layout="wide"
 )
 
+# ==============================
+# VERIFICAR AUTENTICAÇÃO
+# ==============================
+if 'authenticated' not in st.session_state or not st.session_state['authenticated']:
+    st.warning("⚠️ Você precisa fazer login primeiro!")
+    st.info("👉 Use a página **Login** no menu lateral")
+    st.stop()
+
 # Exibir logo
 exibir_logo()
 
+# Mostrar usuário logado
+user_name = st.session_state.get('user_data', {}).get('nome', 'Usuário')
+st.sidebar.markdown(f"👤 **{user_name}**")
+if st.sidebar.button("🚪 Sair"):
+    st.session_state.clear()
+    st.rerun()
+
 st.title("📊 Dashboard de Vendas - Real H")
 st.markdown("### Bem-vindo ao Sistema de Análise de Vendas")
+
+# ==============================
+# CARREGAR DADOS CENTRALIZADOS
+# ==============================
+# Tentar carregar dados salvos pelo admin
+dados_salvos = load_vendas_data()
+
+if dados_salvos[0] is not None:
+    df_vendas_central, df_devolucoes_central, config = dados_salvos
+    
+    # Aplicar filtro de hierarquia do usuário
+    user_hierarchy = st.session_state.get('user_data', {}).get('hierarquia', {})
+    
+    if user_hierarchy and user_hierarchy.get('nivel'):
+        st.info(f"🔒 Visualizando dados de: **{user_hierarchy.get('valor')}** ({user_hierarchy.get('nivel')})")
+        df_vendas_filtrado = apply_hierarchy_filter(df_vendas_central, user_hierarchy, config)
+        df_devolucoes_filtrado = apply_hierarchy_filter(df_devolucoes_central, user_hierarchy, config) if not df_devolucoes_central.empty else pd.DataFrame()
+    else:
+        df_vendas_filtrado = df_vendas_central.copy()
+        df_devolucoes_filtrado = df_devolucoes_central.copy()
+    
+    # Atualizar session_state
+    st.session_state['dados_carregados'] = True
+    st.session_state['df_vendas_original'] = df_vendas_filtrado.copy()
+    st.session_state['df_devolucoes_original'] = df_devolucoes_filtrado.copy()
+    
+    # Aplicar configurações de colunas
+    for key, value in config.items():
+        st.session_state[key] = value
 
 # ==============================
 # INICIALIZAR SESSION STATE
