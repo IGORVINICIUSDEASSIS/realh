@@ -58,6 +58,14 @@ if not st.session_state['authenticated']:
                         st.rerun()
                     else:
                         st.error("❌ Usuário ou senha incorretos")
+                        
+                        # Debug: verificar se usuário existe
+                        from auth import load_users
+                        users = load_users()
+                        if username in users:
+                            st.warning(f"ℹ️ O usuário '{username}' existe, mas a senha está incorreta")
+                        else:
+                            st.warning(f"ℹ️ O usuário '{username}' não existe no sistema")
         
         st.markdown("---")
         st.caption("🔒 Acesso seguro e criptografado")

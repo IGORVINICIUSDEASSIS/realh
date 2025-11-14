@@ -416,6 +416,8 @@ with tab2:
                     success, msg = add_user(new_username, new_password, new_nome, new_tipo, hierarquia)
                     if success:
                         st.success(msg)
+                        st.info(f"✅ Usuário **{new_username}** criado com sucesso!")
+                        st.info(f"🔑 Use o login **{new_username}** com a senha informada para acessar o sistema")
                         st.rerun()
                     else:
                         st.error(msg)
