@@ -275,6 +275,18 @@ with tab2:
         st.metric("👥 Total de Usuários", len(users))
         admins = len([u for u in users if u['tipo'] == 'admin'])
         st.metric("🔑 Administradores", admins)
+        
+        # Botão de debug
+        if st.button("🔍 Verificar arquivo users.json", use_container_width=True):
+            from auth import USERS_FILE, load_users
+            st.info(f"📂 Arquivo: {USERS_FILE}")
+            st.info(f"📝 Existe: {USERS_FILE.exists()}")
+            if USERS_FILE.exists():
+                users_debug = load_users()
+                st.json({"usuarios": list(users_debug.keys())})
+                st.success(f"✓ {len(users_debug)} usuários encontrados")
+            else:
+                st.error("❌ Arquivo não encontrado!")
     
     st.markdown("---")
     
@@ -409,17 +421,34 @@ with tab2:
                 if not new_username or not new_nome or not new_password:
                     st.error("⚠️ Preencha todos os campos obrigatórios")
                 else:
-                    hierarquia = {}
-                    if nivel_hierarquia != "Nenhum (Admin - vê tudo)" and valor_hierarquia:
-                        hierarquia = {'nivel': nivel_hierarquia, 'valor': valor_hierarquia}
-                    
-                    success, msg = add_user(new_username, new_password, new_nome, new_tipo, hierarquia)
-                    if success:
-                        st.success(msg)
-                        st.info(f"✅ Usuário **{new_username}** criado com sucesso!")
-                        st.info(f"🔑 Use o login **{new_username}** com a senha informada para acessar o sistema")
-                        st.rerun()
-                    else:
+                    try:
+                        hierarquia = {}
+                        if nivel_hierarquia != "Nenhum (Admin - vê tudo)" and valor_hierarquia:
+                            hierarquia = {'nivel': nivel_hierarquia, 'valor': valor_hierarquia}
+                        
+                        st.info(f"🔄 Tentando criar usuário: {new_username}")
+                        success, msg = add_user(new_username, new_password, new_nome, new_tipo, hierarquia)
+                        
+                        if success:
+                            st.success(msg)
+                            st.info(f"✅ Usuário **{new_username}** criado com sucesso!")
+                            st.info(f"🔑 Use o login **{new_username}** com a senha informada para acessar o sistema")
+                            
+                            # Verificar se foi realmente salvo
+                            from auth import load_users
+                            users = load_users()
+                            if new_username in users:
+                                st.success(f"✓ Confirmado: Usuário {new_username} encontrado no arquivo")
+                            else:
+                                st.error(f"⚠️ ERRO: Usuário não foi salvo no arquivo!")
+                            
+                            st.rerun()
+                        else:
+                            st.error(msg)
+                    except Exception as e:
+                        st.error(f"❌ Erro ao criar usuário: {str(e)}")
+                        import traceback
+                        st.code(traceback.format_exc())
                         st.error(msg)
 
 # ==========================================
