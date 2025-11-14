@@ -7,14 +7,14 @@ from utils import calcular_mes_comercial, obter_periodo_mes_comercial, ordenar_m
 # ==============================
 st.set_page_config(
     page_title="Real H - Dashboard de Vendas",
-    page_icon="📊",
+    page_icon="🏠",
     layout="wide"
 )
 
 # Exibir logo
 exibir_logo()
 
-st.title("📊 Dashboard de Vendas - Real H")
+st.title("🏠 Página Inicial - Real H")
 st.markdown("### Bem-vindo ao Sistema de Análise de Vendas")
 
 # ==============================
