@@ -674,8 +674,8 @@ with tab_comparativo:
             col_vendedor = st.session_state.get('col_vendedor', 'Vendedor')
             st.write("**Coluna vendedor esperada:**", col_vendedor)
         
-        if 'data_clean' in st.session_state and not st.session_state.data_clean.empty:
-            df_temporal = st.session_state.data_clean.copy()
+        if 'df_vendas' in st.session_state and not st.session_state.df_vendas.empty:
+            df_temporal = st.session_state.df_vendas.copy()
             
             # Usar a coluna de vendedor da sessão
             col_vendedor = st.session_state.get('col_vendedor', 'Vendedor')
@@ -686,77 +686,68 @@ with tab_comparativo:
                 df_temporal_filt = df_temporal[df_temporal[col_vendedor].isin(vendedores_selecionados)]
                 
                 if not df_temporal_filt.empty:
+                    # Verificar se a coluna Mes_Comercial existe
+                    col_mes = 'Mes_Comercial' if 'Mes_Comercial' in df_temporal_filt.columns else st.session_state.get('col_data', 'Data')
+                    
                     # Agrupar por mês comercial e vendedor
-                    df_evolucao = df_temporal_filt.groupby(['Mes_Comercial', col_vendedor]).agg({
-                        st.session_state['col_valor']: 'sum',
-                        st.session_state['col_dev']: 'sum'
+                    df_evolucao = df_temporal_filt.groupby([col_mes, col_vendedor]).agg({
+                        st.session_state['col_valor']: 'sum'
                     }).reset_index()
                     
                     # Renomear colunas para padronizar
                     df_evolucao = df_evolucao.rename(columns={
-                        'Mes_Comercial': 'Mês Comercial',
+                        col_mes: 'Mês Comercial',
                         col_vendedor: 'Vendedor',
-                        st.session_state['col_valor']: 'Valor Líquido',
-                        st.session_state['col_dev']: 'Valor Devolvido'
+                        st.session_state['col_valor']: 'Vendas'
                     })
                 
-                    # Calcular vendas (valor líquido + devoluções)
-                    df_evolucao['Vendas'] = df_evolucao['Valor Líquido'] + abs(df_evolucao['Valor Devolvido'])
-                    df_evolucao['Devoluções'] = abs(df_evolucao['Valor Devolvido'])
-                
-                # Gráfico de evolução de vendas
-                fig_evolucao = go.Figure()
-                
-                cores = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f']
-                
-                for i, vendedor in enumerate(vendedores_selecionados):
-                    dados_vendedor = df_evolucao[df_evolucao['Vendedor'] == vendedor]
+                    # Gráfico de evolução de vendas
+                    fig_evolucao = go.Figure()
                     
-                    if not dados_vendedor.empty:
-                        fig_evolucao.add_trace(go.Scatter(
-                            x=dados_vendedor['Mês Comercial'],
-                            y=dados_vendedor['Vendas'],
-                            mode='lines+markers',
-                            name=vendedor,
-                            line=dict(color=cores[i % len(cores)], width=3),
-                            marker=dict(size=8)
-                        ))
+                    cores = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f']
+                    
+                    for i, vendedor in enumerate(vendedores_selecionados):
+                        dados_vendedor = df_evolucao[df_evolucao['Vendedor'] == vendedor]
+                        
+                        if not dados_vendedor.empty:
+                            fig_evolucao.add_trace(go.Scatter(
+                                x=dados_vendedor['Mês Comercial'],
+                                y=dados_vendedor['Vendas'],
+                                mode='lines+markers',
+                                name=vendedor,
+                                line=dict(color=cores[i % len(cores)], width=3),
+                                marker=dict(size=8)
+                            ))
                 
-                fig_evolucao.update_layout(
-                    title="📈 Evolução de Vendas por Vendedor",
-                    xaxis_title="Mês Comercial",
-                    yaxis_title="Vendas (R$)",
-                    height=500,
-                    hovermode='x unified',
-                    legend=dict(
-                        orientation="h",
-                        yanchor="bottom",
-                        y=1.02,
-                        xanchor="right",
-                        x=1
+                    fig_evolucao.update_layout(
+                        title="📈 Evolução de Vendas por Vendedor",
+                        xaxis_title="Mês Comercial",
+                        yaxis_title="Vendas (R$)",
+                        height=500,
+                        hovermode='x unified',
+                        legend=dict(
+                            orientation="h",
+                            yanchor="bottom",
+                            y=1.02,
+                            xanchor="right",
+                            x=1
+                        )
                     )
-                )
-                
-                st.plotly_chart(fig_evolucao, use_container_width=True)
-                
-                # Tabela comparativa detalhada
-                st.markdown("#### 📋 Tabela Comparativa")
-                
-                # Preparar dados para tabela
-                df_tabela = df_comparativo.round(2)
-                df_tabela = df_tabela.reset_index()
-                
-                # Formatar valores monetários
-                for col in ['Vendas', 'Devoluções', 'Líquido']:
-                    df_tabela[col] = df_tabela[col].apply(lambda x: f"R$ {x:,.2f}")
-                
-                df_tabela['Taxa Dev. (%)'] = df_tabela['Taxa Dev. (%)'].apply(lambda x: f"{x:.1f}%")
-                
-                st.dataframe(
-                    df_tabela,
-                    use_container_width=True,
-                    hide_index=True
-                )
+                    
+                    st.plotly_chart(fig_evolucao, use_container_width=True)
+                    
+                    # Tabela de evolução temporal
+                    st.markdown("#### 📋 Dados da Evolução Temporal")
+                    
+                    # Pivot table para melhor visualização
+                    df_pivot = df_evolucao.pivot(index='Mês Comercial', columns='Vendedor', values='Vendas').fillna(0)
+                    
+                    # Formatar valores
+                    df_display = df_pivot.copy()
+                    for col in df_display.columns:
+                        df_display[col] = df_display[col].apply(lambda x: f"R$ {x:,.0f}" if x > 0 else "R$ 0")
+                    
+                    st.dataframe(df_display, use_container_width=True)
             else:
                 st.warning(f"⚠️ Coluna '{col_vendedor}' não encontrada nos dados temporais.")
         else:
