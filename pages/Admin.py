@@ -285,8 +285,60 @@ with tab2:
                 users_debug = load_users()
                 st.json({"usuarios": list(users_debug.keys())})
                 st.success(f"✓ {len(users_debug)} usuários encontrados")
+                
+                # Mostrar detalhes dos usuários (sem senha)
+                with st.expander("👁️ Ver detalhes dos usuários"):
+                    for username, data in users_debug.items():
+                        st.markdown(f"**{username}:**")
+                        st.json({
+                            "nome": data.get('nome'),
+                            "tipo": data.get('tipo'),
+                            "hierarquia": data.get('hierarquia', {}),
+                            "senha_hash": data.get('password', '')[:20] + "..." if data.get('password') else "N/A"
+                        })
             else:
                 st.error("❌ Arquivo não encontrado!")
+    
+    st.markdown("---")
+    
+    # Testar autenticação
+    with st.expander("🧪 Testar Login de Usuário", expanded=False):
+        st.markdown("Use esta ferramenta para testar se um usuário consegue fazer login")
+        test_username = st.text_input("Usuário para testar", key='test_user')
+        test_password = st.text_input("Senha para testar", type="password", key='test_pass')
+        
+        if st.button("🔐 Testar Autenticação", key='btn_test_auth'):
+            if test_username and test_password:
+                from auth import authenticate, hash_password, load_users
+                
+                users = load_users()
+                st.info(f"🔍 Verificando usuário: **{test_username}**")
+                
+                if test_username in users:
+                    st.success(f"✓ Usuário existe no sistema")
+                    
+                    # Mostrar hash salvo vs hash testado
+                    saved_hash = users[test_username]['password']
+                    test_hash = hash_password(test_password)
+                    
+                    st.code(f"Hash salvo:   {saved_hash[:40]}...")
+                    st.code(f"Hash testado: {test_hash[:40]}...")
+                    
+                    if saved_hash == test_hash:
+                        st.success("✅ SENHA CORRETA! A autenticação deveria funcionar")
+                    else:
+                        st.error("❌ SENHA INCORRETA! Os hashes não coincidem")
+                    
+                    # Testar a função authenticate
+                    user_data = authenticate(test_username, test_password)
+                    if user_data:
+                        st.success(f"✅ authenticate() retornou: {user_data['nome']}")
+                    else:
+                        st.error("❌ authenticate() retornou None")
+                else:
+                    st.error(f"❌ Usuário '{test_username}' não existe")
+            else:
+                st.warning("Preencha usuário e senha para testar")
     
     st.markdown("---")
     
