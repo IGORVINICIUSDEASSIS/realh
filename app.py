@@ -70,15 +70,6 @@ if not st.session_state['authenticated']:
         st.markdown("---")
         st.caption("🔒 Acesso seguro e criptografado")
         st.caption("📞 Problemas? Entre em contato com o administrador")
-        
-        with st.expander("ℹ️ Informações do Sistema"):
-            st.markdown("""
-            **Credenciais padrão do administrador:**
-            - Usuário: `admin`
-            - Senha: `admin123`
-            
-            ⚠️ **IMPORTANTE:** Altere a senha padrão após o primeiro acesso!
-            """)
     
     st.stop()
 
