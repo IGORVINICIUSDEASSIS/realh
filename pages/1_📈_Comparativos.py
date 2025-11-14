@@ -58,9 +58,9 @@ if len(meses_comerciais_disponiveis) >= 2:
     data_inicio_1, data_fim_1 = obter_periodo_mes_comercial(mes_1)
     data_inicio_2, data_fim_2 = obter_periodo_mes_comercial(mes_2)
     
-    # Filtrar dados
-    df_periodo_1 = df_vendas_original[df_vendas_original['Mes_Comercial'] == mes_1]
-    df_periodo_2 = df_vendas_original[df_vendas_original['Mes_Comercial'] == mes_2]
+    # Filtrar dados (usa df_vendas que já está filtrado pelos filtros globais)
+    df_periodo_1 = df_vendas[df_vendas['Mes_Comercial'] == mes_1]
+    df_periodo_2 = df_vendas[df_vendas['Mes_Comercial'] == mes_2]
     
     # Calcular métricas período 1
     valor_total_1 = df_periodo_1[st.session_state['col_valor']].sum()
@@ -69,8 +69,8 @@ if len(meses_comerciais_disponiveis) >= 2:
     ticket_medio_1 = valor_total_1 / pedidos_unicos_1 if pedidos_unicos_1 > 0 else 0
     
     # Devoluções período 1
-    if not df_devolucoes_original.empty:
-        df_dev_1 = df_devolucoes_original[df_devolucoes_original['Mes_Comercial'] == mes_1]
+    if not df_devolucoes.empty:
+        df_dev_1 = df_devolucoes[df_devolucoes['Mes_Comercial'] == mes_1]
         valor_dev_1 = df_dev_1[st.session_state['col_valor']].sum()
     else:
         valor_dev_1 = 0
@@ -84,8 +84,8 @@ if len(meses_comerciais_disponiveis) >= 2:
     ticket_medio_2 = valor_total_2 / pedidos_unicos_2 if pedidos_unicos_2 > 0 else 0
     
     # Devoluções período 2
-    if not df_devolucoes_original.empty:
-        df_dev_2 = df_devolucoes_original[df_devolucoes_original['Mes_Comercial'] == mes_2]
+    if not df_devolucoes.empty:
+        df_dev_2 = df_devolucoes[df_devolucoes['Mes_Comercial'] == mes_2]
         valor_dev_2 = df_dev_2[st.session_state['col_valor']].sum()
     else:
         valor_dev_2 = 0
