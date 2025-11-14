@@ -409,8 +409,18 @@ def gerar_relatorio_pptx(titulo, periodo, metricas_dict, tops_dict, graficos_dic
                 with tempfile.NamedTemporaryFile(suffix='.png', delete=False) as tmp:
                     tmp_path = tmp.name
                 
-                # Usar pio.write_image com kaleido
-                pio.write_image(fig, tmp_path, width=1200, height=700, format='png')
+                # Tentar usar kaleido primeiro
+                try:
+                    pio.write_image(fig, tmp_path, width=1200, height=700, format='png', engine='kaleido')
+                except Exception:
+                    # Se kaleido falhar, tentar com outros engines
+                    try:
+                        pio.write_image(fig, tmp_path, width=1200, height=700, format='png', engine='orca')
+                    except Exception:
+                        # Se tudo falhar, criar um slide com mensagem de aviso
+                        import streamlit as st
+                        st.info(f"ℹ️ Gráfico '{titulo_grafico}' não pôde ser convertido - funcionalidade requer Chrome/Chromium instalado")
+                        continue
                 
                 # Verificar se arquivo foi criado com sucesso
                 if os.path.exists(tmp_path) and os.path.getsize(tmp_path) > 0:
@@ -420,7 +430,7 @@ def gerar_relatorio_pptx(titulo, periodo, metricas_dict, tops_dict, graficos_dic
                     os.unlink(tmp_path)
             except Exception as e:
                 import streamlit as st
-                st.warning(f"⚠️ Não foi possível inserir gráfico: {titulo_grafico} ({str(e)})")
+                st.info(f"ℹ️ Gráfico '{titulo_grafico}' não incluído no relatório - requer Chrome/Chromium instalado no servidor")
     
     # ===== SLIDES DE TOPS COM TABELAS =====
     for titulo_top, df_top in tops_dict.items():

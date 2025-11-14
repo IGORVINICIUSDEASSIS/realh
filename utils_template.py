@@ -204,7 +204,17 @@ def preencher_template_pptx(caminho_template, titulo, periodo, metricas_dict, gr
                 with tempfile.NamedTemporaryFile(suffix='.png', delete=False) as tmp:
                     tmp_path = tmp.name
                 
-                pio.write_image(fig, tmp_path, width=1200, height=700, format='png')
+                # Tentar usar kaleido primeiro
+                try:
+                    pio.write_image(fig, tmp_path, width=1200, height=700, format='png', engine='kaleido')
+                except Exception:
+                    # Se kaleido falhar, tentar com outros engines
+                    try:
+                        pio.write_image(fig, tmp_path, width=1200, height=700, format='png', engine='orca')
+                    except Exception:
+                        # Se tudo falhar, pular este gráfico
+                        print(f"ℹ️ Gráfico '{titulo_grafico}' não pôde ser convertido - requer Chrome/Chromium")
+                        continue
                 
                 if os.path.exists(tmp_path) and os.path.getsize(tmp_path) > 0:
                     # Procurar slide com placeholder de gráfico e substituir
@@ -226,7 +236,7 @@ def preencher_template_pptx(caminho_template, titulo, periodo, metricas_dict, gr
                     
                     os.unlink(tmp_path)
             except Exception as e:
-                print(f"⚠️  Erro ao inserir gráfico {titulo_grafico}: {str(e)}")
+                print(f"ℹ️ Gráfico '{titulo_grafico}' não incluído - requer Chrome/Chromium instalado")
     
     # Salvar em bytes
     output = BytesIO()

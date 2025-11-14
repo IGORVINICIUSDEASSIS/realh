@@ -5,5 +5,4 @@ reportlab
 openpyxl
 matplotlib
 python-pptx
-kaleido
 scipy
