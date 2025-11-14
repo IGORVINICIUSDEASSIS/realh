@@ -71,33 +71,70 @@ with tab1:
                     # Configuração de colunas
                     st.subheader("🔧 Configurar Mapeamento de Colunas")
                     
+                    # Função helper para encontrar índice da coluna
+                    def get_col_index(coluna_procurada, colunas_df, opcoes_nomes=[]):
+                        """Tenta encontrar a coluna na planilha por vários nomes possíveis"""
+                        todas_opcoes = [coluna_procurada] + opcoes_nomes
+                        for nome in todas_opcoes:
+                            if nome in colunas_df:
+                                return list(colunas_df).index(nome)
+                        return 0
+                    
+                    def get_col_index_optional(coluna_procurada, colunas_df, opcoes_nomes=[]):
+                        """Versão para colunas opcionais (com 'Nenhuma')"""
+                        todas_opcoes = [coluna_procurada] + opcoes_nomes
+                        for nome in todas_opcoes:
+                            if nome in colunas_df:
+                                return list(colunas_df).index(nome) + 1
+                        return 0
+                    
                     col1, col2 = st.columns(2)
                     
                     with col1:
                         st.markdown("**Colunas Obrigatórias:**")
-                        col_data = st.selectbox("📅 Data", df_upload.columns.tolist())
-                        col_cliente = st.selectbox("👤 Cliente", df_upload.columns.tolist())
-                        col_codCliente = st.selectbox("🆔 Código Cliente", df_upload.columns.tolist())
-                        col_produto = st.selectbox("📦 Produto", df_upload.columns.tolist())
-                        col_vendedor = st.selectbox("👔 Vendedor", df_upload.columns.tolist())
-                        col_valor = st.selectbox("💰 Valor", df_upload.columns.tolist())
-                        col_linha = st.selectbox("🏢 Linha", ['Nenhuma'] + df_upload.columns.tolist())
+                        col_data = st.selectbox("📅 Data", df_upload.columns.tolist(),
+                                               index=get_col_index("Data Emissão", df_upload.columns, ["Data", "Data Emissao", "Dt. Emissão"]))
+                        col_cliente = st.selectbox("👤 Cliente", df_upload.columns.tolist(),
+                                                  index=get_col_index("Cliente", df_upload.columns, ["Nome Cliente", "Razão Social"]))
+                        col_codCliente = st.selectbox("🆔 Código Cliente", df_upload.columns.tolist(),
+                                                     index=get_col_index("Cód Cliente", df_upload.columns, ["Cod Cliente", "Código Cliente", "CodCliente"]))
+                        col_produto = st.selectbox("📦 Produto", df_upload.columns.tolist(),
+                                                  index=get_col_index("Produto", df_upload.columns, ["Desc. Produto", "Descrição Produto"]))
+                        col_vendedor = st.selectbox("👔 Vendedor", df_upload.columns.tolist(),
+                                                   index=get_col_index("Vendedor", df_upload.columns, ["Nome Vendedor", "Representante"]))
+                        col_codVendedor = st.selectbox("🔢 Cód Vendedor", ['Nenhuma'] + df_upload.columns.tolist(),
+                                                      index=get_col_index_optional("Cód Vend", df_upload.columns, ["Cod Vendedor", "Código Vendedor", "CodVendedor"]))
+                        col_valor = st.selectbox("💰 Valor", df_upload.columns.tolist(),
+                                                index=get_col_index("Vlr. Líq. Total", df_upload.columns, ["Valor", "Vlr Liquido", "Valor Liquido Total", "Vlr. Liq. Total"]))
+                        col_linha = st.selectbox("🏢 Linha", ['Nenhuma'] + df_upload.columns.tolist(),
+                                                index=get_col_index_optional("Linha", df_upload.columns, ["Linha Produto", "Categoria"]))
                     
                     with col2:
                         st.markdown("**Hierarquia (Opcional):**")
-                        col_diretor = st.selectbox("👨‍💼 Diretor", ['Nenhuma'] + df_upload.columns.tolist())
-                        col_gerente_regional = st.selectbox("🌎 Gerente Regional", ['Nenhuma'] + df_upload.columns.tolist())
-                        col_gerente = st.selectbox("👔 Gerente", ['Nenhuma'] + df_upload.columns.tolist())
-                        col_supervisor = st.selectbox("📋 Supervisor", ['Nenhuma'] + df_upload.columns.tolist())
-                        col_coordenador = st.selectbox("📊 Coordenador", ['Nenhuma'] + df_upload.columns.tolist())
-                        col_consultor = st.selectbox("💼 Consultor", ['Nenhuma'] + df_upload.columns.tolist())
+                        col_diretor = st.selectbox("👨‍💼 Diretor", ['Nenhuma'] + df_upload.columns.tolist(),
+                                                  index=get_col_index_optional("Diretor", df_upload.columns))
+                        col_gerente_regional = st.selectbox("🌎 Gerente Regional", ['Nenhuma'] + df_upload.columns.tolist(),
+                                                           index=get_col_index_optional("Ger. Regional", df_upload.columns, ["Gerente Regional", "Ger Regional"]))
+                        col_gerente = st.selectbox("👔 Gerente", ['Nenhuma'] + df_upload.columns.tolist(),
+                                                  index=get_col_index_optional("Gerente", df_upload.columns))
+                        col_supervisor = st.selectbox("📋 Supervisor", ['Nenhuma'] + df_upload.columns.tolist(),
+                                                     index=get_col_index_optional("Supervisor", df_upload.columns))
+                        col_coordenador = st.selectbox("📊 Coordenador", ['Nenhuma'] + df_upload.columns.tolist(),
+                                                      index=get_col_index_optional("Coordenador", df_upload.columns))
+                        col_consultor = st.selectbox("💼 Consultor", ['Nenhuma'] + df_upload.columns.tolist(),
+                                                    index=get_col_index_optional("Consultor", df_upload.columns))
                         
                         st.markdown("**Outras Colunas:**")
-                        col_quantidade = st.selectbox("📊 Quantidade", ['Nenhuma'] + df_upload.columns.tolist())
-                        col_toneladas = st.selectbox("⚖️ Toneladas", ['Nenhuma'] + df_upload.columns.tolist())
-                        col_regiao = st.selectbox("🗺️ Região", ['Nenhuma'] + df_upload.columns.tolist())
-                        col_pedido = st.selectbox("📝 Pedido", ['Nenhuma'] + df_upload.columns.tolist())
-                        col_tipo_movimento = st.selectbox("🔄 Tipo Movimento", ['Nenhuma'] + df_upload.columns.tolist())
+                        col_quantidade = st.selectbox("📊 Quantidade", ['Nenhuma'] + df_upload.columns.tolist(),
+                                                     index=get_col_index_optional("Qtde", df_upload.columns, ["Quantidade", "Qtd"]))
+                        col_toneladas = st.selectbox("⚖️ Toneladas", ['Nenhuma'] + df_upload.columns.tolist(),
+                                                    index=get_col_index_optional("Tn", df_upload.columns, ["TN", "Toneladas"]))
+                        col_regiao = st.selectbox("🗺️ Região", ['Nenhuma'] + df_upload.columns.tolist(),
+                                                 index=get_col_index_optional("Região", df_upload.columns, ["Regiao", "UF", "Estado"]))
+                        col_pedido = st.selectbox("📝 Pedido", ['Nenhuma'] + df_upload.columns.tolist(),
+                                                 index=get_col_index_optional("Pedido", df_upload.columns, ["Nº Pedido", "Numero Pedido", "Nr. Pedido"]))
+                        col_tipo_movimento = st.selectbox("🔄 Tipo Movimento", ['Nenhuma'] + df_upload.columns.tolist(),
+                                                         index=get_col_index_optional("Tipo", df_upload.columns, ["Tipo Movimento", "Tp. Movimento"]))
                     
                     if st.button("💾 Salvar e Processar Dados", type="primary", use_container_width=True):
                         with st.spinner("Processando e salvando dados..."):
@@ -128,6 +165,7 @@ with tab1:
                                 'col_codCliente': col_codCliente,
                                 'col_produto': col_produto,
                                 'col_vendedor': col_vendedor,
+                                'col_codVendedor': col_codVendedor,
                                 'col_valor': col_valor,
                                 'col_linha': col_linha,
                                 'col_quantidade': col_quantidade,
