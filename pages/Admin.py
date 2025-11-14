@@ -344,15 +344,18 @@ with tab2:
     
     # Editar usuário existente
     with st.expander("✏️ Editar Usuário Existente", expanded=False):
-        if users:
+        # Recarregar usuários para garantir lista atualizada
+        users_for_edit = list_users()
+        
+        if users_for_edit and isinstance(users_for_edit, list) and len(users_for_edit) > 0:
             user_to_edit = st.selectbox(
                 "Selecione o usuário para editar:",
-                options=[u['username'] for u in users],
+                options=[u['username'] for u in users_for_edit],
                 key='select_user_edit'
             )
             
             # Buscar dados do usuário
-            user_data = next((u for u in users if u['username'] == user_to_edit), None)
+            user_data = next((u for u in users_for_edit if u['username'] == user_to_edit), None)
             
             if user_data:
                 st.info(f"📝 Editando: **{user_data['nome']}** (@{user_data['username']})")
