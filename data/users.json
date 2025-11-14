@@ -1,0 +1,17 @@
+{
+  "admin": {
+    "password": "5994471abb01112afcc18159f6cc74b4f511b99806da59b3caf5a9c173cacfc5",
+    "nome": "Administrador",
+    "tipo": "admin",
+    "hierarquia": {}
+  },
+  "mirely": {
+    "password": "d185a504027d982b9dc48cdf890cfe980795d7f680e290a2bb2d618c9cb2fead",
+    "nome": "Mirely Vieira",
+    "tipo": "user",
+    "hierarquia": {
+      "nivel": "gerente_regional",
+      "valor": "IZABEL CRISTINA BUDIB POLETO"
+    }
+  }
+}

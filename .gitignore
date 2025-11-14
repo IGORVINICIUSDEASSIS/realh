@@ -1,5 +1,6 @@
 # Dados sensíveis
-data/
+data/*.parquet
+data/config.json
 *.parquet
 .streamlit/secrets.toml
 
