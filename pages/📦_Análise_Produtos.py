@@ -18,10 +18,12 @@ if 'df_vendas' not in st.session_state:
 
 # Pegar dados do session_state
 df_vendas = st.session_state['df_vendas']
-df_vendas_original = st.session_state['df_vendas_original']
 df_devolucoes = st.session_state.get('df_devolucoes', pd.DataFrame())
-df_devolucoes_original = st.session_state.get('df_devolucoes_original', pd.DataFrame())
-meses_comerciais_disponiveis = st.session_state.get('meses_comerciais_disponiveis', [])
+
+# ==============================
+# SELEÇÃO DE PRODUTO
+# ==============================
+st.sidebar.markdown("### 📦 Selecione o Produto")
 
 col_produto = st.session_state['col_produto']
 col_quantidade = st.session_state.get('col_quantidade', 'Nenhuma')
