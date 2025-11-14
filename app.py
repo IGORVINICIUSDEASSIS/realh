@@ -1,7 +1,7 @@
 import streamlit as st
 import sys
 sys.path.append('/workspaces/realh')
-from auth import create_default_admin
+from auth import create_default_admin, authenticate
 
 st.set_page_config(
     page_title="Real H - Dashboard",
@@ -12,51 +12,65 @@ st.set_page_config(
 # Garantir que admin existe
 create_default_admin()
 
+# Inicializar session_state
+if 'authenticated' not in st.session_state:
+    st.session_state['authenticated'] = False
+    st.session_state['user_data'] = None
+
 # Verificar se está autenticado
-if 'authenticated' not in st.session_state or not st.session_state['authenticated']:
-    # Ocultar todas as páginas exceto Login usando CSS
+if not st.session_state['authenticated']:
+    # Ocultar sidebar quando não autenticado
     st.markdown("""
     <style>
-        /* Ocultar navegação da sidebar exceto a primeira página (Login) */
-        [data-testid="stSidebarNav"] ul li:not(:first-child) {
+        [data-testid="stSidebarNav"] {
             display: none !important;
         }
-        section[data-testid="stSidebarNav"] ul li:not(:first-child) {
-            display: none !important;
-        }
-        /* Alternativa para versões diferentes do Streamlit */
-        .css-1544g2n li:not(:first-child) {
+        section[data-testid="stSidebar"] {
             display: none !important;
         }
     </style>
     """, unsafe_allow_html=True)
     
-    st.title("🏢 Real H - Sistema de Análise de Vendas")
+    # Tela de Login
+    st.title("🔐 Login - Real H Dashboard")
     st.markdown("---")
     
-    st.info("👋 Bem-vindo ao Sistema Real H!")
-    st.markdown("""
-    ### 🔐 Para começar, faça seu login:
+    col1, col2, col3 = st.columns([1, 2, 1])
     
-    1. Clique em **"🔐 Login"** no menu lateral ← 
-    2. Use suas credenciais para acessar
-    3. Após o login, você terá acesso a todas as análises
-    
-    ---
-    
-    **📞 Primeira vez?**
-    
-    Entre em contato com o administrador para receber suas credenciais de acesso.
-    """)
-    
-    st.markdown("---")
-    
-    with st.expander("ℹ️ Credenciais de Administrador (Teste)"):
-        st.code("""
-Usuário: admin
-Senha: admin123
-        """)
-        st.warning("⚠️ Estas são credenciais temporárias para teste. Altere após o primeiro acesso!")
+    with col2:
+        st.markdown("### 👤 Acesso ao Sistema")
+        
+        with st.form("login_form"):
+            username = st.text_input("👤 Usuário", placeholder="Digite seu usuário")
+            password = st.text_input("🔑 Senha", type="password", placeholder="Digite sua senha")
+            submit = st.form_submit_button("🚀 Entrar", use_container_width=True)
+            
+            if submit:
+                if not username or not password:
+                    st.error("⚠️ Preencha todos os campos")
+                else:
+                    user_data = authenticate(username, password)
+                    if user_data:
+                        st.session_state['authenticated'] = True
+                        st.session_state['user_data'] = user_data
+                        st.session_state['username'] = username
+                        st.success(f"✅ Bem-vindo, {user_data['nome']}!")
+                        st.rerun()
+                    else:
+                        st.error("❌ Usuário ou senha incorretos")
+        
+        st.markdown("---")
+        st.caption("🔒 Acesso seguro e criptografado")
+        st.caption("📞 Problemas? Entre em contato com o administrador")
+        
+        with st.expander("ℹ️ Informações do Sistema"):
+            st.markdown("""
+            **Credenciais padrão do administrador:**
+            - Usuário: `admin`
+            - Senha: `admin123`
+            
+            ⚠️ **IMPORTANTE:** Altere a senha padrão após o primeiro acesso!
+            """)
     
     st.stop()
 
