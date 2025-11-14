@@ -30,7 +30,10 @@ if 'df_vendas' not in st.session_state:
 
 # Pegar dados do session_state
 df_vendas = st.session_state['df_vendas']
+df_vendas_original = st.session_state['df_vendas_original']
 df_devolucoes = st.session_state.get('df_devolucoes', pd.DataFrame())
+df_devolucoes_original = st.session_state.get('df_devolucoes_original', pd.DataFrame())
+meses_comerciais_disponiveis = st.session_state.get('meses_comerciais_disponiveis', [])
 
 # ==============================
 # FILTROS NA SIDEBAR
@@ -52,6 +55,24 @@ analise_tipo = {
     "🗓️ Por Mês": "mes",
     "🏢 Por Mês Comercial": "mes_comercial"
 }[tipo_analise]
+
+# Filtro de mês comercial (sempre disponível para contexto)
+st.sidebar.markdown("---")
+st.sidebar.markdown("### 🔽 Filtro Adicional")
+
+mes_selecionado = "Todos os Meses"
+if meses_comerciais_disponiveis:
+    filtro_mes_opcoes = ['Todos os Meses'] + list(meses_comerciais_disponiveis)
+    mes_selecionado = st.sidebar.selectbox(
+        "Filtrar por Mês Comercial:",
+        filtro_mes_opcoes,
+        help="Aplica filtro adicional aos dados"
+    )
+    
+    # Aplicar filtro
+    if mes_selecionado != 'Todos os Meses':
+        data_inicio, data_fim = obter_periodo_mes_comercial(mes_selecionado)
+        df_vendas = df_vendas_original[
             (df_vendas_original[st.session_state['col_data']] >= data_inicio) & 
             (df_vendas_original[st.session_state['col_data']] <= data_fim)
         ].copy()

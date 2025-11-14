@@ -24,7 +24,10 @@ if col_gerente_regional == "Nenhuma" or col_gerente_regional not in st.session_s
 
 # Pegar dados do session_state
 df_vendas = st.session_state['df_vendas']
+df_vendas_original = st.session_state['df_vendas_original']
 df_devolucoes = st.session_state.get('df_devolucoes', pd.DataFrame())
+df_devolucoes_original = st.session_state.get('df_devolucoes_original', pd.DataFrame())
+meses_comerciais_disponiveis = st.session_state.get('meses_comerciais_disponiveis', [])
 
 col_quantidade = st.session_state.get('col_quantidade', 'Nenhuma')
 col_toneladas = st.session_state.get('col_toneladas', 'Nenhuma')
@@ -36,6 +39,37 @@ col_supervisor = st.session_state.get('col_supervisor', 'Nenhuma')
 col_coordenador = st.session_state.get('col_coordenador', 'Nenhuma')
 col_consultor = st.session_state.get('col_consultor', 'Nenhuma')
 col_vendedor_leaf = st.session_state.get('col_vendedor_leaf', 'Nenhuma')
+
+# ==============================
+# FILTRO DE MÊS COMERCIAL NA SIDEBAR
+# ==============================
+st.sidebar.markdown("### 📅 Filtro de Período")
+
+if meses_comerciais_disponiveis:
+    filtro_mes_opcoes = ['Todos os Meses'] + list(meses_comerciais_disponiveis)
+    mes_selecionado = st.sidebar.selectbox(
+        "Selecione o Mês Comercial:",
+        filtro_mes_opcoes,
+        help="Mês comercial vai do dia 16 ao dia 15 do mês seguinte"
+    )
+    
+    # Aplicar filtro
+    if mes_selecionado != 'Todos os Meses':
+        data_inicio, data_fim = obter_periodo_mes_comercial(mes_selecionado)
+        df_vendas = df_vendas_original[
+            (df_vendas_original[st.session_state['col_data']] >= data_inicio) & 
+            (df_vendas_original[st.session_state['col_data']] <= data_fim)
+        ].copy()
+        
+        if not df_devolucoes_original.empty:
+            df_devolucoes = df_devolucoes_original[
+                (df_devolucoes_original[st.session_state['col_data']] >= data_inicio) & 
+                (df_devolucoes_original[st.session_state['col_data']] <= data_fim)
+            ].copy()
+        
+        st.sidebar.info(f"📅 {data_inicio.strftime('%d/%m/%Y')} a {data_fim.strftime('%d/%m/%Y')}")
+    else:
+        st.sidebar.info("📅 Exibindo todos os períodos")
 
 # ==============================
 # PROCESSAR DADOS POR GERENTE REGIONAL
