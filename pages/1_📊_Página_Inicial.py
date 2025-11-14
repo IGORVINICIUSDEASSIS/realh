@@ -72,6 +72,14 @@ st.session_state['df_devolucoes_original'] = df_devolucoes_filtrado.copy()
 for key, value in config.items():
     st.session_state[key] = value
 
+# Calcular e salvar meses comerciais disponíveis
+if 'Mes_Comercial' in df_vendas_filtrado.columns:
+    meses_comerciais = df_vendas_filtrado['Mes_Comercial'].dropna().unique()
+    meses_comerciais_ordenados = sorted(meses_comerciais, key=ordenar_mes_comercial, reverse=True)
+    st.session_state['meses_comerciais_disponiveis'] = meses_comerciais_ordenados
+else:
+    st.session_state['meses_comerciais_disponiveis'] = []
+
 st.success("✅ Dados carregados e processados com sucesso!")
 
 # ==============================
