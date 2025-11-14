@@ -141,22 +141,50 @@ with tab1:
                             # Converter data
                             df_upload[col_data] = pd.to_datetime(df_upload[col_data], errors='coerce')
                             
+                            # Remover linhas com datas inválidas
+                            linhas_antes = len(df_upload)
+                            df_upload = df_upload.dropna(subset=[col_data])
+                            linhas_depois = len(df_upload)
+                            
+                            if linhas_antes > linhas_depois:
+                                st.warning(f"⚠️ {linhas_antes - linhas_depois} linhas com datas inválidas foram removidas")
+                            
+                            if df_upload.empty:
+                                st.error("❌ Nenhuma linha válida após processar as datas!")
+                                st.stop()
+                            
                             # Calcular mês comercial
                             df_upload['Mes_Comercial'] = df_upload[col_data].apply(calcular_mes_comercial)
                             
                             # Criar pedido único
                             if col_pedido and col_pedido != 'Nenhuma':
-                                df_upload['Pedido_Unico'] = df_upload[col_pedido].astype(str) + "_" + df_upload[col_cliente].astype(str)
+                                df_upload['Pedido_Unico'] = df_upload[col_pedido].astype(str) + "_" + df_upload[col_codCliente].astype(str)
                             else:
                                 df_upload['Pedido_Unico'] = df_upload.index.astype(str)
                             
                             # Separar vendas e devoluções
                             if col_tipo_movimento and col_tipo_movimento != 'Nenhuma':
-                                df_vendas = df_upload[df_upload[col_tipo_movimento] == 'Venda'].copy()
-                                df_devolucoes = df_upload[df_upload[col_tipo_movimento] == 'Devolução'].copy()
+                                # Aceitar diferentes formatos: VEN/DEV ou Venda/Devolução
+                                valores_unicos = df_upload[col_tipo_movimento].unique()
+                                st.info(f"📋 Tipos encontrados: {', '.join([str(v) for v in valores_unicos])}")
+                                
+                                # Tentar identificar o padrão
+                                if any('VEN' in str(v).upper() for v in valores_unicos):
+                                    df_vendas = df_upload[df_upload[col_tipo_movimento].str.upper().str.contains('VEN', na=False)].copy()
+                                    df_devolucoes = df_upload[df_upload[col_tipo_movimento].str.upper().str.contains('DEV', na=False)].copy()
+                                else:
+                                    df_vendas = df_upload[df_upload[col_tipo_movimento].str.contains('Venda', case=False, na=False)].copy()
+                                    df_devolucoes = df_upload[df_upload[col_tipo_movimento].str.contains('Devol', case=False, na=False)].copy()
                             else:
+                                # Se não tem coluna de tipo, considerar tudo como venda
                                 df_vendas = df_upload.copy()
                                 df_devolucoes = pd.DataFrame()
+                            
+                            # Validar se há vendas
+                            if df_vendas.empty:
+                                st.error("❌ Nenhuma venda encontrada na planilha!")
+                                st.info("💡 Verifique se a coluna 'Tipo Movimento' contém 'VEN' ou 'Venda'")
+                                st.stop()
                             
                             # Configuração
                             config = {
@@ -185,6 +213,18 @@ with tab1:
                             save_vendas_data(df_vendas, df_devolucoes, config)
                             
                             st.success("✅ Dados salvos com sucesso!")
+                            
+                            # Mostrar resumo
+                            col_a, col_b, col_c = st.columns(3)
+                            with col_a:
+                                st.metric("📊 Vendas", f"{len(df_vendas):,}")
+                            with col_b:
+                                st.metric("↩️ Devoluções", f"{len(df_devolucoes):,}")
+                            with col_c:
+                                data_min = df_vendas[col_data].min()
+                                data_max = df_vendas[col_data].max()
+                                st.metric("📅 Período", f"{safe_strftime(data_min, '%m/%Y')} - {safe_strftime(data_max, '%m/%Y')}")
+                            
                             st.balloons()
                             st.session_state['substituir_dados'] = False
                             st.rerun()

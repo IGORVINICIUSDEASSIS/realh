@@ -841,11 +841,17 @@ def aplicar_filtros_globais(df_original, filtros, col_cliente, col_produto, col_
         # Apenas aplicar date range se selecionado diferente do padrão
         if filtros.get('data_inicio') and filtros.get('data_fim'):
             df_temp = df_filtrado.copy()
-            df_temp[col_data] = pd.to_datetime(df_temp[col_data])
-            df_filtrado = df_filtrado[
-                (df_temp[col_data] >= filtros['data_inicio']) & 
-                (df_temp[col_data] <= filtros['data_fim'])
-            ]
+            df_temp[col_data] = pd.to_datetime(df_temp[col_data], errors='coerce')
+            
+            # Remover linhas com datas inválidas
+            df_filtrado = df_filtrado[df_temp[col_data].notna()]
+            df_temp = df_temp[df_temp[col_data].notna()]
+            
+            if not df_temp.empty:
+                df_filtrado = df_filtrado[
+                    (df_temp[col_data] >= filtros['data_inicio']) & 
+                    (df_temp[col_data] <= filtros['data_fim'])
+                ]
         return df_filtrado
     
     # Aplicar filtros básicos
@@ -883,11 +889,17 @@ def aplicar_filtros_globais(df_original, filtros, col_cliente, col_produto, col_
     # Aplicar filtro de data
     if filtros.get('data_inicio') and filtros.get('data_fim'):
         df_temp = df_filtrado.copy()
-        df_temp[col_data] = pd.to_datetime(df_temp[col_data])
-        df_filtrado = df_filtrado[
-            (df_temp[col_data] >= filtros['data_inicio']) & 
-            (df_temp[col_data] <= filtros['data_fim'])
-        ]
+        df_temp[col_data] = pd.to_datetime(df_temp[col_data], errors='coerce')
+        
+        # Remover linhas com datas inválidas antes de filtrar
+        df_filtrado = df_filtrado[df_temp[col_data].notna()]
+        df_temp = df_temp[df_temp[col_data].notna()]
+        
+        if not df_temp.empty:
+            df_filtrado = df_filtrado[
+                (df_temp[col_data] >= filtros['data_inicio']) & 
+                (df_temp[col_data] <= filtros['data_fim'])
+            ]
     
     return df_filtrado
 
