@@ -14,6 +14,20 @@ st.set_page_config(
 # Exibir logo
 exibir_logo()
 
+# CSS para renomear "app" na sidebar
+st.markdown("""
+<style>
+    [data-testid="stSidebarNav"] li:first-child a span {
+        display: none;
+    }
+    [data-testid="stSidebarNav"] li:first-child a::before {
+        content: "🏠 Página Inicial";
+        margin-left: 1rem;
+        font-size: 14px;
+    }
+</style>
+""", unsafe_allow_html=True)
+
 st.title("🏠 Página Inicial - Real H")
 st.markdown("### Bem-vindo ao Sistema de Análise de Vendas")
 
