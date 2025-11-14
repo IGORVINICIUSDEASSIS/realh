@@ -64,6 +64,30 @@ if not st.session_state['authenticated']:
         st.markdown("---")
         st.caption("🔒 Acesso seguro e criptografado")
         st.caption("📞 Problemas? Entre em contato com o administrador")
+        
+        # Botão de emergência para resetar senha do admin
+        with st.expander("🆘 Esqueceu a senha do admin?"):
+            st.warning("⚠️ Use apenas em caso de emergência!")
+            st.markdown("""
+            **Opções para recuperar o acesso:**
+            
+            1. **Via terminal/console:**
+               ```bash
+               python reset_admin.py
+               ```
+            
+            2. **Via código Python:**
+               ```python
+               import json, hashlib
+               users = json.load(open('data/users.json'))
+               users['admin']['password'] = hashlib.sha256('admin123'.encode()).hexdigest()
+               json.dump(users, open('data/users.json', 'w'), indent=2)
+               ```
+            
+            3. **Manualmente:**
+               - Edite o arquivo `data/users.json`
+               - Copie o hash da senha de outro usuário conhecido
+            """)
     
     st.stop()
 
