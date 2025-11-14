@@ -293,56 +293,53 @@ with tab2:
             if user_data:
                 st.info(f"📝 Editando: **{user_data['nome']}** (@{user_data['username']})")
                 
-                with st.form("edit_user_form"):
-                    edit_nome = st.text_input("📝 Nome Completo", value=user_data['nome'])
-                    edit_tipo = st.selectbox("🎭 Tipo", ["user", "admin"], 
-                                            index=0 if user_data['tipo'] == 'user' else 1)
-                    
-                    st.markdown("**🔑 Alterar Senha** (deixe em branco para manter a atual)")
-                    edit_password = st.text_input("Nova Senha", type="password", key='edit_password')
-                    
-                    st.markdown("**🏢 Hierarquia do Usuário:**")
-                    
-                    # Valores atuais de hierarquia
-                    current_nivel = user_data.get('hierarquia', {}).get('nivel', 'Nenhum')
-                    current_valor = user_data.get('hierarquia', {}).get('valor', '')
-                    
-                    # Se não tem hierarquia, mostrar como "Nenhum (Admin - vê tudo)"
-                    if not current_nivel or current_nivel == 'Nenhum':
-                        current_nivel_display = "Nenhum (Admin - vê tudo)"
-                    else:
-                        current_nivel_display = current_nivel
-                    
-                    niveis_opcoes = ["Nenhum (Admin - vê tudo)", "diretor", "gerente_regional", "gerente", 
-                                    "supervisor", "coordenador", "consultor", "vendedor"]
-                    
-                    try:
-                        nivel_index = niveis_opcoes.index(current_nivel_display)
-                    except ValueError:
-                        nivel_index = 0
-                    
-                    edit_nivel = st.selectbox(
-                        "Nível",
-                        niveis_opcoes,
-                        index=nivel_index,
-                        key='edit_nivel'
+                edit_nome = st.text_input("📝 Nome Completo", value=user_data['nome'], key='edit_nome_input')
+                edit_tipo = st.selectbox("🎭 Tipo", ["user", "admin"], 
+                                        index=0 if user_data['tipo'] == 'user' else 1, key='edit_tipo_select')
+                
+                st.markdown("**🔑 Alterar Senha** (deixe em branco para manter a atual)")
+                edit_password = st.text_input("Nova Senha", type="password", key='edit_password_input')
+                
+                st.markdown("**🏢 Hierarquia do Usuário:**")
+                
+                # Valores atuais de hierarquia
+                current_nivel = user_data.get('hierarquia', {}).get('nivel', 'Nenhum')
+                current_valor = user_data.get('hierarquia', {}).get('valor', '')
+                
+                # Se não tem hierarquia, mostrar como "Nenhum (Admin - vê tudo)"
+                if not current_nivel or current_nivel == 'Nenhum':
+                    current_nivel_display = "Nenhum (Admin - vê tudo)"
+                else:
+                    current_nivel_display = current_nivel
+                
+                niveis_opcoes = ["Nenhum (Admin - vê tudo)", "diretor", "gerente_regional", "gerente", 
+                                "supervisor", "coordenador", "consultor", "vendedor"]
+                
+                try:
+                    nivel_index = niveis_opcoes.index(current_nivel_display)
+                except ValueError:
+                    nivel_index = 0
+                
+                edit_nivel = st.selectbox(
+                    "Nível",
+                    niveis_opcoes,
+                    index=nivel_index,
+                    key='edit_nivel_select'
+                )
+                
+                edit_valor = ""
+                if edit_nivel != "Nenhum (Admin - vê tudo)":
+                    edit_valor = st.text_input(
+                        "Valor (nome exato como aparece na planilha)",
+                        value=current_valor,
+                        key='edit_valor_input'
                     )
-                    
-                    edit_valor = ""
-                    if edit_nivel != "Nenhum (Admin - vê tudo)":
-                        edit_valor = st.text_input(
-                            "Valor (nome exato como aparece na planilha)",
-                            value=current_valor,
-                            key='edit_valor'
-                        )
-                    
-                    col_btn1, col_btn2 = st.columns(2)
-                    with col_btn1:
-                        submit_edit = st.form_submit_button("💾 Salvar Alterações", type="primary", use_container_width=True)
-                    with col_btn2:
-                        submit_delete = st.form_submit_button("🗑️ Excluir Usuário", type="secondary", use_container_width=True)
-                    
-                    if submit_edit:
+                
+                st.markdown("---")
+                col_btn1, col_btn2, col_btn3 = st.columns([2, 2, 1])
+                
+                with col_btn1:
+                    if st.button("💾 Salvar Alterações", type="primary", use_container_width=True, key='btn_save_user'):
                         if not edit_nome:
                             st.error("⚠️ O nome não pode estar vazio")
                         else:
@@ -368,8 +365,9 @@ with tab2:
                                 st.rerun()
                             else:
                                 st.error(msg)
-                    
-                    if submit_delete:
+                
+                with col_btn2:
+                    if st.button("🗑️ Excluir Usuário", type="secondary", use_container_width=True, key='btn_delete_user'):
                         if user_to_edit == 'admin':
                             st.error("❌ Não é possível excluir o usuário admin padrão")
                         elif user_to_edit == st.session_state.get('user_data', {}).get('username'):
