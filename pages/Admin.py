@@ -351,10 +351,18 @@ with tab2:
                             if edit_nivel != "Nenhum (Admin - vê tudo)" and edit_valor:
                                 hierarquia = {'nivel': edit_nivel, 'valor': edit_valor}
                             
-                            # Preparar senha (None se não foi alterada)
-                            new_pass = edit_password if edit_password else None
+                            # Preparar dados para atualização
+                            update_data = {
+                                'nome': edit_nome,
+                                'tipo': edit_tipo,
+                                'hierarquia': hierarquia
+                            }
                             
-                            success, msg = update_user(user_to_edit, new_pass, edit_nome, edit_tipo, hierarquia)
+                            # Adicionar senha apenas se foi informada
+                            if edit_password:
+                                update_data['password'] = edit_password
+                            
+                            success, msg = update_user(user_to_edit, **update_data)
                             if success:
                                 st.success(msg)
                                 st.rerun()
