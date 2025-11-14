@@ -34,6 +34,8 @@ meses_comerciais_disponiveis = st.session_state.get('meses_comerciais_disponivei
 # ==============================
 st.sidebar.markdown("### 📅 Filtro de Período")
 
+mes_selecionado = 'Todos os Meses'  # Valor padrão
+
 if meses_comerciais_disponiveis:
     filtro_mes_opcoes = ['Todos os Meses'] + list(meses_comerciais_disponiveis)
     mes_selecionado = st.sidebar.selectbox(
