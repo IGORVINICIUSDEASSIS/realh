@@ -263,7 +263,7 @@ def apply_hierarchy_filter(df, user_hierarchy, colunas):
     
     Args:
         df: DataFrame com os dados
-        user_hierarchy: Dicionário com nível e valor da hierarquia do usuário
+        user_hierarchy: Dicionário com nível e valor(es) da hierarquia do usuário
         colunas: Dicionário com mapeamento de colunas
     
     Returns:
@@ -289,7 +289,11 @@ def apply_hierarchy_filter(df, user_hierarchy, colunas):
     coluna = nivel_coluna_map.get(nivel)
     
     if coluna and coluna in df.columns and coluna != 'Nenhuma':
-        return df[df[coluna] == valor].copy()
+        # Suportar múltiplos valores (lista) ou valor único (string)
+        if isinstance(valor, list):
+            return df[df[coluna].isin(valor)].copy()
+        else:
+            return df[df[coluna] == valor].copy()
     
     return df
 

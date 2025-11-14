@@ -423,13 +423,52 @@ with tab2:
                     key='edit_nivel_select'
                 )
                 
-                edit_valor = ""
+                edit_valor = []
                 if edit_nivel != "Nenhum (Admin - vê tudo)":
-                    edit_valor = st.text_input(
-                        "Valor (nome exato como aparece na planilha)",
-                        value=current_valor,
-                        key='edit_valor_input'
-                    )
+                    # Obter valores disponíveis da planilha para o nível selecionado
+                    dados = load_vendas_data()
+                    valores_disponiveis = []
+                    
+                    if dados[0] is not None:
+                        config = dados[2]
+                        nivel_coluna_map = {
+                            'diretor': config.get('col_diretor'),
+                            'gerente_regional': config.get('col_gerente_regional'),
+                            'gerente': config.get('col_gerente'),
+                            'supervisor': config.get('col_supervisor'),
+                            'coordenador': config.get('col_coordenador'),
+                            'consultor': config.get('col_consultor'),
+                            'vendedor': config.get('col_vendedor')
+                        }
+                        
+                        coluna = nivel_coluna_map.get(edit_nivel)
+                        if coluna and coluna in dados[0].columns and coluna != 'Nenhuma':
+                            valores_disponiveis = sorted(dados[0][coluna].dropna().unique().tolist())
+                    
+                    # Converter valor atual para lista se for string
+                    if isinstance(current_valor, str) and current_valor:
+                        default_valores = [current_valor]
+                    elif isinstance(current_valor, list):
+                        default_valores = current_valor
+                    else:
+                        default_valores = []
+                    
+                    if valores_disponiveis:
+                        edit_valor = st.multiselect(
+                            "Selecione um ou mais valores (permite ver múltiplos vendedores, gerentes, etc)",
+                            valores_disponiveis,
+                            default=[v for v in default_valores if v in valores_disponiveis],
+                            key='edit_valor_multiselect'
+                        )
+                    else:
+                        st.warning("⚠️ Carregue uma planilha primeiro para ver os valores disponíveis")
+                        edit_valor_text = st.text_area(
+                            "Digite os valores separados por vírgula",
+                            value=", ".join(default_valores) if default_valores else "",
+                            key='edit_valor_text'
+                        )
+                        if edit_valor_text:
+                            edit_valor = [v.strip() for v in edit_valor_text.split(',') if v.strip()]
                 
                 st.markdown("---")
                 col_btn1, col_btn2, col_btn3 = st.columns([2, 2, 1])
@@ -439,10 +478,13 @@ with tab2:
                         if not edit_nome:
                             st.error("⚠️ O nome não pode estar vazio")
                         else:
+                        try:
                             # Preparar hierarquia
-                            hierarquia = {}
+                            edit_hierarquia = {}
                             if edit_nivel != "Nenhum (Admin - vê tudo)" and edit_valor:
-                                hierarquia = {'nivel': edit_nivel, 'valor': edit_valor}
+                                # Se só tiver um valor, salvar como string; se múltiplos, como lista
+                                valor_final = edit_valor[0] if len(edit_valor) == 1 else edit_valor
+                                edit_hierarquia = {'nivel': edit_nivel, 'valor': valor_final}
                             
                             # Preparar dados para atualização
                             update_data = {
@@ -495,9 +537,38 @@ with tab2:
                  "supervisor", "coordenador", "consultor", "vendedor"]
             )
             
-            valor_hierarquia = ""
+            valor_hierarquia = []
             if nivel_hierarquia != "Nenhum (Admin - vê tudo)":
-                valor_hierarquia = st.text_input("Valor (nome exato como aparece na planilha)")
+                # Obter valores disponíveis da planilha
+                dados = load_vendas_data()
+                valores_disponiveis = []
+                
+                if dados[0] is not None:
+                    config = dados[2]
+                    nivel_coluna_map = {
+                        'diretor': config.get('col_diretor'),
+                        'gerente_regional': config.get('col_gerente_regional'),
+                        'gerente': config.get('col_gerente'),
+                        'supervisor': config.get('col_supervisor'),
+                        'coordenador': config.get('col_coordenador'),
+                        'consultor': config.get('col_consultor'),
+                        'vendedor': config.get('col_vendedor')
+                    }
+                    
+                    coluna = nivel_coluna_map.get(nivel_hierarquia)
+                    if coluna and coluna in dados[0].columns and coluna != 'Nenhuma':
+                        valores_disponiveis = sorted(dados[0][coluna].dropna().unique().tolist())
+                
+                if valores_disponiveis:
+                    valor_hierarquia = st.multiselect(
+                        "Selecione um ou mais valores (permite ver múltiplos vendedores, gerentes, etc)",
+                        valores_disponiveis
+                    )
+                else:
+                    st.warning("⚠️ Carregue uma planilha primeiro para ver os valores disponíveis")
+                    valor_text = st.text_area("Digite os valores separados por vírgula")
+                    if valor_text:
+                        valor_hierarquia = [v.strip() for v in valor_text.split(',') if v.strip()]
             
             submit_add = st.form_submit_button("➕ Criar Usuário")
             
@@ -508,7 +579,9 @@ with tab2:
                     try:
                         hierarquia = {}
                         if nivel_hierarquia != "Nenhum (Admin - vê tudo)" and valor_hierarquia:
-                            hierarquia = {'nivel': nivel_hierarquia, 'valor': valor_hierarquia}
+                            # Se só tiver um valor, salvar como string; se múltiplos, como lista
+                            valor_final = valor_hierarquia[0] if len(valor_hierarquia) == 1 else valor_hierarquia
+                            hierarquia = {'nivel': nivel_hierarquia, 'valor': valor_final}
                         
                         st.info(f"🔄 Tentando criar usuário: {new_username}")
                         success, msg = add_user(new_username, new_password, new_nome, new_tipo, hierarquia)

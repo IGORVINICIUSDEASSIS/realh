@@ -67,7 +67,13 @@ st.markdown("### Bem-vindo ao Sistema de Análise de Vendas")
 user_hierarchy = st.session_state.get('user_data', {}).get('hierarquia', {})
 
 if user_hierarchy and user_hierarchy.get('nivel'):
-    st.info(f"🔒 Visualizando dados de: **{user_hierarchy.get('valor')}** ({user_hierarchy.get('nivel')})")
+    valor = user_hierarchy.get('valor')
+    # Exibir múltiplos valores se for lista
+    if isinstance(valor, list):
+        valores_str = ", ".join(valor)
+        st.info(f"🔒 Visualizando dados de: **{valores_str}** ({user_hierarchy.get('nivel')})")
+    else:
+        st.info(f"🔒 Visualizando dados de: **{valor}** ({user_hierarchy.get('nivel')})")
     df_vendas_filtrado = apply_hierarchy_filter(df_vendas_central, user_hierarchy, config)
     df_devolucoes_filtrado = apply_hierarchy_filter(df_devolucoes_central, user_hierarchy, config) if not df_devolucoes_central.empty else pd.DataFrame()
 else:
