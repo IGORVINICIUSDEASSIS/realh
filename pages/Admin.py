@@ -234,6 +234,9 @@ with tab1:
                                 # Salvar
                                 save_vendas_data(df_vendas, df_devolucoes, config)
                                 
+                                # Atualizar session_state com o config incluindo data_hora_upload
+                                st.session_state['config'] = config
+                                
                                 st.success("✅ Dados salvos com sucesso!")
                                 
                                 # Mostrar resumo

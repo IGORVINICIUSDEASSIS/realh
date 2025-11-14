@@ -21,28 +21,21 @@ if 'authenticated' not in st.session_state or not st.session_state['authenticate
     st.warning("⚠️ Você precisa fazer login primeiro!")
     st.stop()
 
-# Exibir logo
-exibir_logo()
-
-# Mostrar usuário logado
-user_name = st.session_state.get('user_data', {}).get('nome', 'Usuário')
-user_type = st.session_state.get('user_data', {}).get('tipo', 'user')
-st.sidebar.markdown(f"👤 **{user_name}**")
-if user_type == 'admin':
-    st.sidebar.markdown("🔑 *Administrador*")
-if st.sidebar.button("🚪 Sair"):
-    st.session_state.clear()
-    st.rerun()
-
-st.title("📊 Dashboard de Vendas - Real H")
-st.markdown("### Bem-vindo ao Sistema de Análise de Vendas")
-
 # ==============================
 # CARREGAR DADOS CENTRALIZADOS
 # ==============================
 dados_salvos = load_vendas_data()
 
+user_name = st.session_state.get('user_data', {}).get('nome', 'Usuário')
+user_type = st.session_state.get('user_data', {}).get('tipo', 'user')
+
 if dados_salvos[0] is None:
+    # Exibir logo mesmo sem dados
+    exibir_logo()
+    
+    st.title("📊 Dashboard de Vendas - Real H")
+    st.markdown("### Bem-vindo ao Sistema de Análise de Vendas")
+    
     st.warning("⚠️ Nenhum dado foi carregado no sistema ainda.")
     if user_type == 'admin':
         st.info("👉 Vá para o **Painel Admin** para fazer upload da planilha.")
@@ -52,6 +45,21 @@ if dados_salvos[0] is None:
 
 # Carregar e aplicar filtro de hierarquia
 df_vendas_central, df_devolucoes_central, config = dados_salvos
+
+# Salvar config no session_state ANTES de exibir o logo
+for key, value in config.items():
+    st.session_state[key] = value
+
+# Agora exibir logo (que vai ler a config do session_state)
+exibir_logo()
+
+# Botão de sair na sidebar
+if st.sidebar.button("🚪 Sair"):
+    st.session_state.clear()
+    st.rerun()
+
+st.title("📊 Dashboard de Vendas - Real H")
+st.markdown("### Bem-vindo ao Sistema de Análise de Vendas")
 
 user_hierarchy = st.session_state.get('user_data', {}).get('hierarquia', {})
 
@@ -67,10 +75,6 @@ else:
 st.session_state['dados_carregados'] = True
 st.session_state['df_vendas_original'] = df_vendas_filtrado.copy()
 st.session_state['df_devolucoes_original'] = df_devolucoes_filtrado.copy()
-
-# Aplicar configurações de colunas
-for key, value in config.items():
-    st.session_state[key] = value
 
 # Calcular e salvar meses comerciais disponíveis
 if 'Mes_Comercial' in df_vendas_filtrado.columns:
